@@ -1,0 +1,55 @@
+#define VERSION_MAJOR  3
+#define VERSION_MINOR  3
+#define VERSION_BUGFIX 4
+#define VERSION_BUILD  0
+#define VERSION_STRING "3.3.4"
+
+#if TARGET==0
+
+ #define TARGET_NAME  "ck.exe"
+ 1   ICON ck.ico
+
+#elif TARGET==1
+
+ #define TARGET_NAME  "ck.con.exe"
+
+#elif TARGET==2
+
+ #define TARGET_NAME  "ck.app.dll"
+ 1   ICON ck.ico
+ 1   TYPELIB "interface.tlb"
+ 201 SCRIPT  "script_sys.js"
+
+#endif
+
+1 VERSIONINFO
+ FILEVERSION    VERSION_MAJOR, VERSION_MINOR, VERSION_BUGFIX, VERSION_BUILD
+ PRODUCTVERSION VERSION_MAJOR, VERSION_MINOR, VERSION_BUGFIX, VERSION_BUILD
+ FILEFLAGSMASK 0x3FL
+ FILEFLAGS     0x0L
+ FILEOS        0x40004L
+ #if TARGET==2
+  FILETYPE      0x2L
+ #else
+  FILETYPE      0x1L
+ #endif
+ FILESUBTYPE   0x0L
+BEGIN
+ BLOCK "StringFileInfo"
+ BEGIN
+  BLOCK "040904B0"
+  BEGIN
+   VALUE "FileDescription",  TARGET_NAME
+   VALUE "FileVersion",      VERSION_STRING
+   VALUE "InternalName",     TARGET_NAME
+   VALUE "LegalCopyright",   "(C) kish@wb3.so-net.ne.jp"
+   VALUE "OriginalFilename", TARGET_NAME
+   VALUE "ProductName",      "cygwin ck"
+   VALUE "ProductVersion",   VERSION_STRING
+  END
+ END
+ BLOCK "VarFileInfo"
+ BEGIN
+  VALUE "Translation", 0x0409,0x04E4
+ END
+END

@@ -1,0 +1,253 @@
+﻿import "docobj.idl";
+
+enum Encoding{
+	Encoding_EUCJP = 0x01,
+	Encoding_SJIS  = 0x02,
+	Encoding_UTF8  = 0x04,
+};
+
+enum PrivMode{
+	Priv_Col132     = 0x00000001,
+	Priv_Allow132   = 0x00000002,
+	Priv_RVideo     = 0x00000004,
+	Priv_RelOrg     = 0x00000008,
+	Priv_Screen     = 0x00000010,
+	Priv_AutoWrap   = 0x00000020,
+	Priv_AplCUR     = 0x00000040,
+	Priv_AplKP      = 0x00000080,
+	Priv_Backspace  = 0x00000100,
+	Priv_ShiftKey   = 0x00000200,
+	Priv_VisibleCur = 0x00000400,
+	Priv_MouseX10   = 0x00000800,
+	Priv_MouseX11   = 0x00001000,
+	Priv_ScrlTtyOut = 0x00002000,
+	Priv_ScrlTtyKey = 0x00004000,
+	Priv_SmoothScrl = 0x00008000,
+	Priv_VT52       = 0x00010000,
+	Priv_UseBell    = 0x20000000,
+	Priv_CjkWidth   = 0x40000000,
+};
+
+enum ModKey{
+	ModKey_ShiftL = 0x01000000,
+	ModKey_ShiftR = 0x02000000,
+	ModKey_CtrlL  = 0x04000000,
+	ModKey_CtrlR  = 0x08000000,
+	ModKey_AltL   = 0x10000000,
+	ModKey_AltR   = 0x20000000,
+	ModKey_Caps   = 0x40000000,
+
+	ModKey_Key    = 0x00FFFFFF,
+	ModKey_Mask   = 0xFF000000,
+	ModKey_Shift  = ModKey_ShiftL | ModKey_ShiftR,
+	ModKey_Ctrl   = ModKey_CtrlL  | ModKey_CtrlR,
+	ModKey_Alt    = ModKey_AltL   | ModKey_AltR,
+};
+
+enum CharFlag{
+	CharFlag_Null    = 0x00000001,
+	CharFlag_MbLead  = 0x00000002,
+	CharFlag_MbTrail = 0x00000004,
+	CharFlag_Bold    = 0x00000100,
+	CharFlag_Uline   = 0x00000200,
+	CharFlag_Invert  = 0x00000400,
+	CharFlag_Blink   = 0x00000800,
+	CharFlag_FG      = 0x00001000,
+	CharFlag_BG      = 0x00002000,
+	CharFlag_Select  = 0x00004000,
+	CharFlag_Cursor  = 0x00008000,
+	CharFlag_Styles  = 0xFFFFFF00,
+};
+
+struct Char{
+	WCHAR	ch;
+	WORD	user;
+	enum CharFlag flags;
+};
+
+struct Snapshot{
+	int	width;
+	int	height;
+	int	view;
+	int	nlines;
+	int	cursor_x;
+	int	cursor_y;
+	struct Char chars[1];
+};
+
+
+[object,dual,uuid(cc4fb945-b285-4396-90c6-a0069c2d672e)]
+interface IPty: IDispatch{
+	HRESULT Dispose();
+	[propget] HRESULT PageWidth([out,retval] int* p);
+	[propget] HRESULT PageHeight([out,retval] int* p);
+	[propget] HRESULT CursorPosX([out,retval] int* p);
+	[propget] HRESULT CursorPosY([out,retval] int* p);
+	[propget] HRESULT Savelines([out,retval] int* p);
+	[propput] HRESULT Savelines([in] int n);
+	[propget] HRESULT ViewPos([out,retval] int* p);
+	[propput] HRESULT ViewPos([in] int n);
+	[propget] HRESULT InputEncoding([out,retval] enum Encoding* p);
+	[propput] HRESULT InputEncoding([in] enum Encoding n);
+	[propget] HRESULT DisplayEncoding([out,retval] enum Encoding* p);
+	[propput] HRESULT DisplayEncoding([in] enum Encoding n);
+	[propget] HRESULT PrivMode([out,retval] enum PrivMode* p);
+	[propput] HRESULT PrivMode([in] enum PrivMode n);
+	[propget] HRESULT Title([out,retval] BSTR* pp);
+	[propput] HRESULT Title([in] BSTR p);
+	[propget] HRESULT CurrentDirectory([out,retval] BSTR* pp);
+	[hidden] HRESULT _new_snapshot([out] struct Snapshot** pp);
+	[hidden] HRESULT _del_snapshot([in] struct Snapshot* p);
+	HRESULT Resize([in] int w, [in] int h);
+	HRESULT Reset([in] VARIANT_BOOL full);
+	HRESULT PutString([in] BSTR str);
+	HRESULT PutKeyboard([in] enum ModKey keycode);
+	HRESULT PutMouse([in] int x, [in] int y, [in] enum ModKey key, [in] int nclicks, [out] VARIANT_BOOL* handled);
+	HRESULT SetSelection([in] int x1, [in] int y1, [in] int x2, [in] int y2, [in] int mode);
+	[propget] HRESULT SelectedString([out,retval] BSTR* pp);
+};
+
+//---
+
+enum Place{
+	Place_Scale,
+	Place_Zoom,
+	Place_Repeat,
+	Place_NoRepeat,
+};
+enum Align{
+	Align_Near,
+	Align_Center,
+	Align_Far,
+};
+enum WinZOrder{
+	WinZOrder_Normal,
+	WinZOrder_Top,
+	WinZOrder_Bottom,
+};
+enum WinTransp{
+	WinTransp_None,
+	WinTransp_Transp,
+	WinTransp_Grass,
+	WinTransp_GrassNoEdge,
+};
+enum MouseCmd{
+	MouseCmd_None,
+	MouseCmd_Select,
+	MouseCmd_Paste,
+	MouseCmd_Menu,
+};
+
+
+[object,dual,uuid(3d90d23f-35c1-4578-9272-647bcffc8313)]
+interface IWnd: IDispatch{
+	HRESULT Dispose();
+	[propget] HRESULT Handle([out,retval] UINT* p);
+	[propget] HRESULT Pty([out,retval] VARIANT* p);
+	[propput] HRESULT Pty([in] VARIANT var);
+	[propput] HRESULT Title([in] BSTR p);
+	[propget] HRESULT MouseLBtn([out,retval] enum MouseCmd* p);
+	[propput] HRESULT MouseLBtn([in] enum MouseCmd n);
+	[propget] HRESULT MouseMBtn([out,retval] enum MouseCmd* p);
+	[propput] HRESULT MouseMBtn([in] enum MouseCmd n);
+	[propget] HRESULT MouseRBtn([out,retval] enum MouseCmd* p);
+	[propput] HRESULT MouseRBtn([in] enum MouseCmd n);
+	[propget] HRESULT Color([in] int i, [out,retval] DWORD* p);
+	[propput] HRESULT Color([in] int i, [in] DWORD color);
+	[propget] HRESULT ColorAlpha([in] VARIANT_BOOL fg, [out,retval] BYTE* p);
+	[propput] HRESULT ColorAlpha([in] VARIANT_BOOL fg, [in] BYTE n);
+	[propget] HRESULT BackgroundImage([out,retval] BSTR* pp);
+	[propput] HRESULT BackgroundImage([in] BSTR path);
+	[propget] HRESULT BackgroundPlace([out,retval] DWORD* p);
+	[propput] HRESULT BackgroundPlace([in] DWORD n);
+	[propget] HRESULT FontName([out,retval] BSTR* pp);
+	[propput] HRESULT FontName([in] BSTR p);
+	[propget] HRESULT FontSize([out,retval] int* p);
+	[propput] HRESULT FontSize([in] int n);
+	[propget] HRESULT LineSpace([out,retval] BYTE* p);
+	[propput] HRESULT LineSpace([in] BYTE n);
+	[propget] HRESULT Border([out,retval] DWORD* p);
+	[propput] HRESULT Border([in] DWORD n);
+	[propget] HRESULT Scrollbar([out,retval] int* p);
+	[propput] HRESULT Scrollbar([in] int n);
+	[propget] HRESULT Transp([out,retval] enum WinTransp* p);
+	[propput] HRESULT Transp([in] enum WinTransp n);
+	[propget] HRESULT ZOrder([out,retval] enum WinZOrder* p);
+	[propput] HRESULT ZOrder([in] enum WinZOrder n);
+	[propget] HRESULT BlinkCursor([out,retval] VARIANT_BOOL* p);
+	[propput] HRESULT BlinkCursor([in] VARIANT_BOOL b);
+	[propget] HRESULT ImeState([out,retval] VARIANT_BOOL* p);
+	[propput] HRESULT ImeState([in] VARIANT_BOOL b);
+	HRESULT Close();
+	HRESULT Show();
+	HRESULT Resize([in] int cw, [in] int ch);
+	HRESULT Move([in] int x, [in] int y);
+	HRESULT PopupMenu([in] VARIANT_BOOL system_menu);
+	HRESULT UpdateScreen();
+};
+
+//---
+
+[object,uuid(b32a3940-5f4c-4016-a5a7-a62f87c3df46)]
+interface IPtyNotify: IUnknown{
+	HRESULT OnClosed([in] IPty* sender);
+	HRESULT OnUpdateScreen([in] IPty* sender);
+	HRESULT OnUpdateTitle([in] IPty* sender);
+	HRESULT OnReqFont([in] IPty* sender, int id);
+	HRESULT OnReqMove([in] IPty* sender, int x, int y);
+	HRESULT OnReqResize([in] IPty* sender, int x, int y);
+};
+
+[object,uuid(b40b45b0-c714-4d1e-9dd2-32f66148b8e6)]
+interface IWndNotify: IUnknown{
+	HRESULT OnClosed([in] IWnd* sender);
+	HRESULT OnKeyDown([in] IWnd* sender, [in] DWORD vk);
+	HRESULT OnMouseWheel([in] IWnd* sender, [in] int delta);
+	HRESULT OnMenuInit([in] IWnd* sender, [in] int* menu);
+	HRESULT OnMenuExec([in] IWnd* sender, [in] DWORD id);
+	HRESULT OnTitleInit([in] IWnd* sender);
+	HRESULT OnDrop([in] IWnd* sender, [in] BSTR bs, [in] int type, [in] DWORD key);
+};
+
+[object,dual,uuid(77ff51e7-3f35-4e4b-aa88-d6fdb533dc4d)]
+interface IApp: IDispatch{
+	HRESULT  trace([in] BSTR str);
+	HRESULT  alert([in] BSTR str);
+	HRESULT  Quit();
+	[propget] HRESULT  Version([out,retval] BSTR* pp);
+	[propget] HRESULT  IsDesktopComposition([out,retval] VARIANT_BOOL* p);
+	[propget] HRESULT  ActiveWindow([out,retval] UINT* p);
+
+	[propget] HRESULT  Clipboard([out,retval] BSTR* pp);
+	[propput] HRESULT  Clipboard([in] BSTR p);
+
+	[propget] HRESULT  Env([in] BSTR name, [out,retval] BSTR* pp);
+	[propput] HRESULT  Env([in] BSTR name, [in] BSTR value);
+
+	[propget] HRESULT  ShowConsole([out,retval] VARIANT_BOOL* p);
+	[propput] HRESULT  ShowConsole([in] VARIANT_BOOL b);
+
+	[propget] HRESULT  CurrentDirectory([out,retval] BSTR* pp);
+	[propput] HRESULT  CurrentDirectory([in] BSTR cygpath);
+
+	HRESULT  NewPty([in] BSTR cmdline, [out,retval] IPty **pp);
+	HRESULT  NewWnd([out,retval] IWnd **pp);
+
+	HRESULT  AddMenu(int id, BSTR str, VARIANT_BOOL check);
+	HRESULT  AddMenuSeparator();
+
+	HRESULT  ToCygwinPath([in] BSTR path, [out,retval] BSTR* pp);
+	HRESULT  ToWindowsPath([in] BSTR path, [out,retval] BSTR* pp);
+
+	HRESULT  EvalFile(BSTR cygpath);
+};
+
+[version(1.0),uuid(a41dbf65-7924-37dd-8e30-3a09b4979775)]
+library Ck{
+	enum Place;
+	enum Align;
+	interface IPtyNotify;
+	interface IWndNotify;
+	interface IApp;
+}
+//EOF

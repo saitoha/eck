@@ -1,0 +1,64 @@
+﻿2012-06-12  Hayaki Saito <user@zuse.jp>
+        eck Version 0.0.1
+        ・fork
+
+2011-02-19  Kazuo Ishii  <kish@wb3.so-net.ne.jp>
+	Version 3.3.4
+	・main_con_gccを整理。fork()時の無駄なdllを減らした。
+	・-share, -dirオプションを追加。
+
+2011-02-10  Kazuo Ishii  <kish@wb3.so-net.ne.jp>
+	Version 3.3.3
+	・デフォルト設定を見直しました。文字色など。
+	・描画周りのコードを少し整理。
+
+2011-01-11  Kazuo Ishii  <kish@wb3.so-net.ne.jp>
+	Version 3.3.2
+	・高分解能ホイールマウス（クリック感の無いヌルヌルホイール）で、
+	　ホイールスクロールしない不具合を修正。
+
+2010-08-31  Kazuo Ishii  <kish@wb3.so-net.ne.jp>
+	Version 3.3.1
+	・ファイルをドラッグドロップすると落ちるバグを修正。
+	・コンパイラを Visual Studio 2010へ変更。
+
+2009-12-29  Kazuo Ishii  <kish@wb3.so-net.ne.jp>
+	Version 3.3.0
+	とりあえず cygwin 1.7で動作するよう改造しました。
+
+2007-09-19  Kazuo Ishii  <k-ishii@wb4.so-net.ne.jp>
+	Version 3.2.1
+	文字幅の取得方法を変更。
+
+2007-08-10  Kazuo Ishii  <k-ishii@wb4.so-net.ne.jp>
+	Version 3.2.0
+	ck内でck.exeを実行した時、親ckでコマンドを実行するようにした。
+	UTF-8入力時のコード変換が間違ってた。
+	スクリプトからIMEのon/offを制御できるようにした。
+	display_encodingで指定してないコードが使われる場合があった。
+	書込みスレッドが途中で終了してしまう場合があった。
+	描画時に異常終了することがあった。
+	内部スクリプト(script_sys.js)の構成を大幅変更。
+	起動時の引数を増量。
+
+2007-07-26  Kazuo Ishii  <k-ishii@wb4.so-net.ne.jp>
+	Version 3.1.4
+	フォントを正しく初期化できてなかった。
+
+2007-07-25  Kazuo Ishii  <k-ishii@wb4.so-net.ne.jp>
+	Version 3.1.3
+	Bold文字の色が違っていた。
+	左側スクロールバーの設定を追加。
+
+2007-07-11  Kazuo Ishii  <k-ishii@wb4.so-net.ne.jp>
+	Version 3.1.2
+	eucjpの文字コード変換テーブルが一部間違っていた。
+
+2007-07-09  Kazuo Ishii  <k-ishii@wb4.so-net.ne.jp>
+	Version 3.1.1
+	申告するバージョンが間違っていた。
+	リージョン指定時の LineFeedが一行ズレていた。
+
+2007-06-30  Kazuo Ishii  <k-ishii@wb4.so-net.ne.jp>
+	Version 3.1.0
+	初出。

@@ -1,0 +1,13 @@
+﻿LIBRARY cygwin1.dll
+EXPORTS
+	close
+	cygwin_dll_init
+	execvp
+	exit
+	forkpty
+	free
+	getenv
+	getpwuid
+	getuid
+	malloc
+	signal
