@@ -270,11 +270,12 @@ protected:
     bool _process_sequence_esc(WCHAR* input, int& idx, int max, UpdateStore& upp);
     bool _process_sequence_vt52(WCHAR* input, int& idx, int max, UpdateStore& upp);
     bool _process_sequence(WCHAR* input, int& idx, int max, UpdateStore& upp);
-    bool _get_priv(PrivMode mask){ return (m_priv & mask)? true: false;}
-    bool _set_priv(char mode, PrivMode mask){
+    int _get_priv(int mask){ return m_priv & mask;}
+    bool _set_priv(char mode, int mask, int flag = (int)Priv_None){
         if(mode=='t') mode = (m_priv & mask) ? 'l' : 'h';
-        if(mode=='h' || mode=='s'){ m_priv=(PrivMode)(m_priv | mask); return true;}
-        if(mode=='l' || mode=='r'){ m_priv=(PrivMode)(m_priv & ~mask); return false;}
+        m_priv = (PrivMode)(m_priv & ~mask);
+        if(mode=='h' || mode=='s'){ m_priv=(PrivMode)(m_priv | (mask & flag)); return true;}
+        if(mode=='l' || mode=='r'){ return false;}
         return _get_priv(mask);
     }
     void _reset(bool full){
@@ -555,7 +556,7 @@ STDMETHODIMP  Pty_::PutKeyboard(ModKey key){
 }
 
 STDMETHODIMP  Pty_::PutMouse(int x, int y, ModKey key, int nclicks, VARIANT_BOOL* handled){
-    if(_get_priv(Priv_MouseX10) || _get_priv(Priv_MouseX11)){
+    if(_get_priv(Priv_MouseModeMask)){
         *handled = TRUE;
         int w = m_screen.Current().GetPageWidth();
         int h = m_screen.Current().GetPageHeight();
@@ -1040,7 +1041,7 @@ void Pty_::_process_sequence_term_mode(char priv, int n, int arg[], UpdateStore&
         case 8://DECARM auto repeat keys
             break;
         case 9://mouse X10
-            _set_priv(priv, Priv_MouseX10);
+            _set_priv(priv, Priv_MouseProtocolMask, Priv_MouseProtocol_X10);
             break;
         case 12://att610 blinking cursor
         case 18://DECPFF print from feed
@@ -1065,11 +1066,11 @@ void Pty_::_process_sequence_term_mode(char priv, int n, int arg[], UpdateStore&
         case 45://reverse wraparound mode
         case 46://start/stop logging
         case 47://normal/alternate screen buffer
-            m_screen.Set( _set_priv(priv, Priv_Screen) );
+            m_screen.Set( _set_priv(priv, Priv_Screen) != 0 );
             break;
         case 1047://secondary screen clearing
         case 1049://secondary buffer & cursor
-            m_screen.Set( _set_priv(priv, Priv_Screen) );
+            m_screen.Set( _set_priv(priv, Priv_Screen) != 0 );
             m_screen.Back().ErasePage(2);
             break;
         case 66://DECNKM
@@ -1079,16 +1080,31 @@ void Pty_::_process_sequence_term_mode(char priv, int n, int arg[], UpdateStore&
             _set_priv(priv, Priv_Backspace);
             break;
         case 1000://X11 mouse reporting (VT200 mouse)
+            _set_priv(priv, Priv_MouseModeMask, Priv_MouseMode_Normal);
+            break;
         case 1001://X11 mouse highliting (VT200 highlight mouse)
+            _set_priv(priv, Priv_MouseModeMask, Priv_MouseMode_Highlight);
+            break;
         case 1002://X11 button event mouse
+            _set_priv(priv, Priv_MouseModeMask, Priv_MouseMode_ButtonEvent);
+            break;
         case 1003://X11 any event mouse
-            _set_priv(priv, Priv_MouseX11);
+            _set_priv(priv, Priv_MouseModeMask, Priv_MouseMode_AnyEvent);
+            break;
+        case 1005://UTF8 1005 mouse protocol
+            // ignore
+            break;
+        case 1006://SGR 1006 mouse protocol
+            _set_priv(priv, Priv_MouseProtocolMask, Priv_MouseProtocol_Sgr);
             break;
         case 1010://scroll to bottom TTY output inhibit
             _set_priv(priv, Priv_ScrlTtyOut);
             break;
         case 1011://scroll to bottom on key press
             _set_priv(priv, Priv_ScrlTtyKey);
+            break;
+        case 1015://urxvt 1015 mouse protocol
+            _set_priv(priv, Priv_MouseProtocolMask, Priv_MouseProtocol_Urxvt);
             break;
         case 1035://numlock
         case 1036://meta sends escape

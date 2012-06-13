@@ -203,11 +203,11 @@ static DISPID get_disp_id(IDispatch* disp, LPWSTR name){
     }
     return id;
 }
-static HRESULT invoke_v(IDispatch* disp, DISPID id, UINT argc, VARIANTARG* argv){
+static HRESULT invoke_v(IDispatch* disp, DISPID id, UINT argc, VARIANTARG* argv, VARIANT *presult = NULL){
     HRESULT hr=E_FAIL;
     if(disp && id){
         DISPPARAMS param = { argv, NULL, argc, 0 };
-        hr = disp->Invoke(id, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &param, 0,0,0);
+        hr = disp->Invoke(id, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &param, presult,0,0);
     }
     return hr;
 }
@@ -272,6 +272,9 @@ private:
     DISPID    m_event_app_on_new_command;
     DISPID    m_event_wnd_on_closed;
     DISPID    m_event_wnd_on_key_down;
+    DISPID    m_event_wnd_on_mouse_down;
+    DISPID    m_event_wnd_on_mouse_up;
+    DISPID    m_event_wnd_on_mouse_move;
     DISPID    m_event_wnd_on_mouse_wheel;
     DISPID    m_event_wnd_on_menu_init;
     DISPID    m_event_wnd_on_menu_execute;
@@ -433,15 +436,88 @@ public:
         invoke_v(m_event_root, m_event_wnd_on_key_down, 2, args);
         return S_OK;
     }
-    STDMETHOD(OnMouseWheel)(IWnd* sender, int delta){
-        VARIANTARG args[3];
-        args[2].vt = VT_DISPATCH;
-        args[2].pdispVal = sender;
+    STDMETHOD(OnMouseDown)(IWnd* sender, LONG button, LONG x, LONG y, LONG modifier, VARIANT_BOOL *presult){
+        VARIANTARG args[5];
+        VARIANT result;
+        VariantInit(&result);
+        result.vt = VT_BOOL;
+        args[4].vt = VT_DISPATCH;
+        args[4].pdispVal = sender;
+        args[3].vt = VT_I4;
+        args[3].lVal = (LONG) button;
+        args[2].vt = VT_I4;
+        args[2].lVal = (LONG) x;
+        args[1].vt = VT_I4;
+        args[1].lVal = (LONG) y;
+        args[0].vt = VT_I4;
+        args[0].lVal = (LONG) modifier;
+        invoke_v(m_event_root, m_event_wnd_on_mouse_down, 5, args, &result);
+        if (result.vt == VT_BOOL) {
+            *presult = result.boolVal;
+        } else {
+            *presult = VARIANT_FALSE;
+        }
+        return S_OK;
+    }
+    STDMETHOD(OnMouseUp)(IWnd* sender, LONG button, LONG x, LONG y, LONG modifier, VARIANT_BOOL *presult){
+        VARIANTARG args[5];
+        VARIANT result;
+        VariantInit(&result);
+        result.vt = VT_BOOL;
+        args[4].vt = VT_DISPATCH;
+        args[4].pdispVal = sender;
+        args[3].vt = VT_I4;
+        args[3].lVal = (LONG) button;
+        args[2].vt = VT_I4;
+        args[2].lVal = (LONG) x;
+        args[1].vt = VT_I4;
+        args[1].lVal = (LONG) y;
+        args[0].vt = VT_I4;
+        args[0].lVal = (LONG) modifier;
+        invoke_v(m_event_root, m_event_wnd_on_mouse_up, 5, args, &result);
+        if (result.vt == VT_BOOL) {
+            *presult = result.boolVal;
+        } else {
+            *presult = VARIANT_FALSE;
+        }
+        return S_OK;
+    }
+    STDMETHOD(OnMouseMove)(IWnd* sender, LONG button, LONG x, LONG y, LONG modifier, VARIANT_BOOL *presult){
+        VARIANTARG args[5];
+        VARIANT result;
+        VariantInit(&result);
+        result.vt = VT_BOOL;
+        args[4].vt = VT_DISPATCH;
+        args[4].pdispVal = sender;
+        args[3].vt = VT_I4;
+        args[3].lVal = (LONG) button;
+        args[2].vt = VT_I4;
+        args[2].lVal = (LONG) x;
+        args[1].vt = VT_I4;
+        args[1].lVal = (LONG) y;
+        args[0].vt = VT_I4;
+        args[0].lVal = (LONG) modifier;
+        invoke_v(m_event_root, m_event_wnd_on_mouse_move, 5, args, &result);
+        if (result.vt == VT_BOOL) {
+            *presult = result.boolVal;
+        } else {
+            *presult = VARIANT_FALSE;
+        }
+        return S_OK;
+    }
+    STDMETHOD(OnMouseWheel)(IWnd* sender, LONG x, LONG y, long delta){
+        VARIANTARG args[5];
+        args[4].vt = VT_DISPATCH;
+        args[4].pdispVal = sender;
+        args[3].vt = VT_I4;
+        args[3].lVal = (LONG) x;
+        args[2].vt = VT_I4;
+        args[2].lVal = (LONG) y;
         args[1].vt = VT_I4;
         args[1].lVal = (LONG) get_mod_key(0);
         args[0].vt = VT_I4;
         args[0].lVal = (LONG) delta;
-        invoke_v(m_event_root, m_event_wnd_on_mouse_wheel, 3, args);
+        invoke_v(m_event_root, m_event_wnd_on_mouse_wheel, 5, args);
         return S_OK;
     }
     STDMETHOD(OnMenuInit)(IWnd* sender, int* menu){
@@ -623,6 +699,9 @@ App::App()
       m_event_app_on_new_command(0),
       m_event_wnd_on_closed(0),
       m_event_wnd_on_key_down(0),
+      m_event_wnd_on_mouse_down(0),
+      m_event_wnd_on_mouse_up(0),
+      m_event_wnd_on_mouse_move(0),
       m_event_wnd_on_mouse_wheel(0),
       m_event_wnd_on_menu_init(0),
       m_event_wnd_on_menu_execute(0),
@@ -684,6 +763,9 @@ HRESULT App::initialize(){
         m_event_app_on_new_command  = get_disp_id(m_event_root, L"app_on_new_command");
         m_event_wnd_on_closed       = get_disp_id(m_event_root, L"wnd_on_closed");
         m_event_wnd_on_key_down     = get_disp_id(m_event_root, L"wnd_on_key_down");
+        m_event_wnd_on_mouse_down   = get_disp_id(m_event_root, L"wnd_on_mouse_down");
+        m_event_wnd_on_mouse_up     = get_disp_id(m_event_root, L"wnd_on_mouse_up");
+        m_event_wnd_on_mouse_move   = get_disp_id(m_event_root, L"wnd_on_mouse_move");
         m_event_wnd_on_mouse_wheel  = get_disp_id(m_event_root, L"wnd_on_mouse_wheel");
         m_event_wnd_on_menu_init    = get_disp_id(m_event_root, L"wnd_on_menu_init");
         m_event_wnd_on_menu_execute = get_disp_id(m_event_root, L"wnd_on_menu_execute");

@@ -805,7 +805,10 @@ class IWindowNotify_{
 public:
     STDMETHOD(OnClosed)() = 0;
     STDMETHOD(OnKeyDown)(DWORD vk) = 0;
-    STDMETHOD(OnMouseWheel)(int delta) = 0;
+    STDMETHOD(OnMouseDown)(LONG button, LONG x, LONG y, LONG modifier, VARIANT_BOOL *presult) = 0;
+    STDMETHOD(OnMouseUp)(LONG button, LONG x, LONG y, LONG modifier, VARIANT_BOOL *presult) = 0;
+    STDMETHOD(OnMouseMove)(LONG button, LONG x, LONG y, LONG modifier, VARIANT_BOOL *presult) = 0;
+    STDMETHOD(OnMouseWheel)(LONG x, LONG y, LONG delta) = 0;
     STDMETHOD(OnMenuInit)(HMENU menu) = 0;
     STDMETHOD(OnMenuExec)(DWORD id) = 0;
     STDMETHOD(OnTitleInit)() = 0;
@@ -1050,13 +1053,90 @@ protected:
         case WM_WINDOWPOSCHANGING: wm_on_window_pos_changing((WINDOWPOS*)lp);return 0;
         case WM_WINDOWPOSCHANGED:  wm_on_window_pos_changed ((WINDOWPOS*)lp);return 0;
         case WM_TIMER:       wm_on_timer((DWORD)wp);break;
-        case WM_MOUSEMOVE:   wm_on_mouse_move(GET_X_LPARAM(lp), GET_Y_LPARAM(lp));return 0;
-        case WM_LBUTTONDOWN: wm_on_mouse_down(GET_X_LPARAM(lp), GET_Y_LPARAM(lp), m_lbtn_cmd);return 0;
-        case WM_LBUTTONUP:   wm_on_mouse_up  (GET_X_LPARAM(lp), GET_Y_LPARAM(lp), m_lbtn_cmd);return 0;
-        case WM_MBUTTONDOWN: wm_on_mouse_down(GET_X_LPARAM(lp), GET_Y_LPARAM(lp), m_mbtn_cmd);return 0;
-        case WM_MBUTTONUP:   wm_on_mouse_up  (GET_X_LPARAM(lp), GET_Y_LPARAM(lp), m_mbtn_cmd);return 0;
-        case WM_RBUTTONDOWN: wm_on_mouse_down(GET_X_LPARAM(lp), GET_Y_LPARAM(lp), m_rbtn_cmd);return 0;
-        case WM_RBUTTONUP:   wm_on_mouse_up  (GET_X_LPARAM(lp), GET_Y_LPARAM(lp), m_rbtn_cmd);return 0;
+        case WM_MOUSEMOVE:
+            {
+                int x = (GET_X_LPARAM(lp) - m_border.left) / (m_font_width + 0);
+                int y = (GET_Y_LPARAM(lp) - m_border.top ) / (m_font_height + m_linespace);
+
+                VARIANT_BOOL result = VARIANT_FALSE;
+                m_notify->OnMouseMove(3, x, y, ModKey_Mask, &result);
+                if (result == VARIANT_FALSE) {
+                    wm_on_mouse_move(GET_X_LPARAM(lp), GET_Y_LPARAM(lp));
+                }
+            }
+            return 0;
+        case WM_LBUTTONDOWN:
+            {
+                int x = (GET_X_LPARAM(lp) - m_border.left) / (m_font_width + 0);
+                int y = (GET_Y_LPARAM(lp) - m_border.top ) / (m_font_height + m_linespace);
+
+                VARIANT_BOOL result = VARIANT_FALSE;
+                m_notify->OnMouseDown(0, x, y, ModKey_Mask, &result);
+                if (result == VARIANT_FALSE) {
+                    wm_on_mouse_down(GET_X_LPARAM(lp), GET_Y_LPARAM(lp), m_lbtn_cmd);
+                }
+            }
+            return 0;
+        case WM_LBUTTONUP:
+            {
+                int x = (GET_X_LPARAM(lp) - m_border.left) / (m_font_width + 0);
+                int y = (GET_Y_LPARAM(lp) - m_border.top ) / (m_font_height + m_linespace);
+
+                VARIANT_BOOL result = VARIANT_FALSE;
+                m_notify->OnMouseUp(0, x, y, ModKey_Mask, &result);
+                if (result == VARIANT_FALSE) {
+                    wm_on_mouse_up(GET_X_LPARAM(lp), GET_Y_LPARAM(lp), m_lbtn_cmd);
+                }
+            }
+            return 0;
+        case WM_MBUTTONDOWN:
+            {
+                int x = (GET_X_LPARAM(lp) - m_border.left) / (m_font_width + 0);
+                int y = (GET_Y_LPARAM(lp) - m_border.top ) / (m_font_height + m_linespace);
+
+                VARIANT_BOOL result = VARIANT_FALSE;
+                m_notify->OnMouseDown(1, x, y, ModKey_Mask, &result);
+                if (result == VARIANT_FALSE) {
+                    wm_on_mouse_down(GET_X_LPARAM(lp), GET_Y_LPARAM(lp), m_mbtn_cmd);
+                }
+            }
+            return 0;
+        case WM_MBUTTONUP:
+            {
+                int x = (GET_X_LPARAM(lp) - m_border.left) / (m_font_width + 0);
+                int y = (GET_Y_LPARAM(lp) - m_border.top ) / (m_font_height + m_linespace);
+
+                VARIANT_BOOL result = VARIANT_FALSE;
+                m_notify->OnMouseUp(1, x, y, ModKey_Mask, &result);
+                if (result == VARIANT_FALSE) {
+                    wm_on_mouse_up(GET_X_LPARAM(lp), GET_Y_LPARAM(lp), m_mbtn_cmd);
+                }
+            }
+            return 0;
+        case WM_RBUTTONDOWN:
+            {
+                int x = (GET_X_LPARAM(lp) - m_border.left) / (m_font_width + 0);
+                int y = (GET_Y_LPARAM(lp) - m_border.top ) / (m_font_height + m_linespace);
+
+                VARIANT_BOOL result = VARIANT_FALSE;
+                m_notify->OnMouseDown(2, x, y, ModKey_Mask, &result);
+                if (result == VARIANT_FALSE) {
+                    wm_on_mouse_down(GET_X_LPARAM(lp), GET_Y_LPARAM(lp), m_rbtn_cmd);
+                }
+            }
+            return 0;
+        case WM_RBUTTONUP:
+            {
+                int x = (GET_X_LPARAM(lp) - m_border.left) / (m_font_width + 0);
+                int y = (GET_Y_LPARAM(lp) - m_border.top ) / (m_font_height + m_linespace);
+
+                VARIANT_BOOL result = VARIANT_FALSE;
+                m_notify->OnMouseUp(2, x, y, ModKey_Mask, &result);
+                if (result == VARIANT_FALSE) {
+                    wm_on_mouse_up(GET_X_LPARAM(lp), GET_Y_LPARAM(lp), m_rbtn_cmd);
+                }
+            }
+            return 0;
 
         case WM_ERASEBKGND:
             return 1;
@@ -1070,11 +1150,14 @@ protected:
             return 0;
         case WM_MOUSEWHEEL:
             {
+                int x = (GET_X_LPARAM(lp) - m_border.left) / (m_font_width + 0);
+                int y = (GET_Y_LPARAM(lp) - m_border.top ) / (m_font_height + m_linespace);
+
                 m_wheel_delta += GET_WHEEL_DELTA_WPARAM(wp);
                 int notch = m_wheel_delta / WHEEL_DELTA;
                 if(notch){
                     m_wheel_delta -= notch * WHEEL_DELTA;
-                    m_notify->OnMouseWheel(notch);
+                    m_notify->OnMouseWheel(x, y, notch);
                 }
             }
             return 0;
@@ -2020,7 +2103,16 @@ public:
 
     STDMETHOD(OnClosed)(){ return m_notify->OnClosed(this);}
     STDMETHOD(OnKeyDown)(DWORD vk){ return m_notify->OnKeyDown(this, vk);}
-    STDMETHOD(OnMouseWheel)(int delta){ return m_notify->OnMouseWheel(this,delta);}
+    STDMETHOD(OnMouseDown)(LONG button, LONG x, LONG y, LONG modifier, VARIANT_BOOL *presult){ 
+        return m_notify->OnMouseDown(this, button, x, y, modifier, presult);
+    }
+    STDMETHOD(OnMouseUp)(LONG button, LONG x, LONG y, LONG modifier, VARIANT_BOOL *presult){ 
+        return m_notify->OnMouseUp(this, button, x, y, modifier, presult);
+    }
+    STDMETHOD(OnMouseMove)(LONG button, LONG x, LONG y, LONG modifier, VARIANT_BOOL *presult){ 
+        return m_notify->OnMouseMove(this, button, x, y, modifier, presult);
+    }
+    STDMETHOD(OnMouseWheel)(LONG x, LONG y, LONG delta){ return m_notify->OnMouseWheel(this, x, y, delta);}
     STDMETHOD(OnMenuInit)(HMENU menu){ return m_notify->OnMenuInit(this, (int*)menu);}
     STDMETHOD(OnMenuExec)(DWORD id){ return m_notify->OnMenuExec(this, id);}
     STDMETHOD(OnTitleInit)(){ return m_notify->OnTitleInit(this);}
