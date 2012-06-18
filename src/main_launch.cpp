@@ -88,10 +88,11 @@ static HWND  find_parent_ck_window(){
     return result;
 }
 
-static HRESULT startup(){
+static HRESULT startup() {
+
     // 1. process tree
     HWND hwnd = find_parent_ck_window();
-    if(!hwnd){
+    if(!hwnd) {
         int     argc = 0;
         WCHAR** argv = CommandLineToArgvW(GetCommandLineW(), &argc);
         if(argv){
@@ -114,12 +115,14 @@ static HRESULT startup(){
 
     // new instance
 
-    WCHAR  image [MAX_PATH+8];
-    DWORD  n = GetModuleFileName(0, image, MAX_PATH+4);
-    if(n<1) return E_FAIL;
+    WCHAR  image [MAX_PATH + 8];
+    DWORD  n = GetModuleFileName(0, image, MAX_PATH + 4);
+
+    if(n < 1)
+        return E_FAIL;
 
     for(; n>0 && image[n-1] != '\\'; n--);
-    lstrcpy(image+n, L"ck.con.exe");
+    lstrcpy(image + n, L"ck.con.exe");
 
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
@@ -147,7 +150,12 @@ static HRESULT startup(){
     pi.dwProcessId = 0;
     pi.dwThreadId = 0;
 
-    if(CreateProcess(image, GetCommandLine(), 0,0,FALSE, CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE|CREATE_NEW_PROCESS_GROUP|NORMAL_PRIORITY_CLASS, 0,0,&si,&pi)){
+    BOOL ret = CreateProcess(image, 
+                             GetCommandLine(), 
+                             0, 0, FALSE, 
+                             CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE|CREATE_NEW_PROCESS_GROUP|NORMAL_PRIORITY_CLASS, 
+                             0, 0, &si, &pi);
+    if (ret) {
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
         return S_OK;

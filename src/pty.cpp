@@ -270,13 +270,32 @@ protected:
     bool _process_sequence_esc(WCHAR* input, int& idx, int max, UpdateStore& upp);
     bool _process_sequence_vt52(WCHAR* input, int& idx, int max, UpdateStore& upp);
     bool _process_sequence(WCHAR* input, int& idx, int max, UpdateStore& upp);
-    int _get_priv(int mask){ return m_priv & mask;}
-    bool _set_priv(char mode, int mask, int flag = (int)Priv_None){
-        if(mode=='t') mode = (m_priv & mask) ? 'l' : 'h';
+    
+    int _get_priv(int mask) { 
+        return m_priv & mask;
+    }
+    
+    bool _set_priv(char mode, int mask, int flag = (int)Priv_None) {
+        if(mode == 't') 
+            mode = (m_priv & mask) ? 'l' : 'h';
         m_priv = (PrivMode)(m_priv & ~mask);
-        if(mode=='h' || mode=='s'){ m_priv=(PrivMode)(m_priv | (mask & flag)); return true;}
-        if(mode=='l' || mode=='r'){ return false;}
-        return _get_priv(mask);
+        
+        switch (mode) {
+        case 'h':
+            if (flag == (int)Priv_None) {
+                m_priv = (PrivMode)(m_priv | mask); 
+            } else {
+                m_priv = (PrivMode)(m_priv | (mask & flag)); 
+            }
+            return true;
+        case 'l':
+            return false;
+        case 's':
+            return false;
+        case 'r':
+            return false;
+        }
+        return false;
     }
     void _reset(bool full){
         if(full) m_wr_buf.Clear();
@@ -374,7 +393,6 @@ public:
         return S_OK;
     }
     STDMETHOD(PutKeyboard)(ModKey key);
-    STDMETHOD(PutMouse)(int x, int y, ModKey key, int nclicks, VARIANT_BOOL* handled);
     STDMETHOD(PutString)(BSTR str);
     STDMETHOD(SetSelection)(int x1, int y1, int x2, int y2, int mode){
         m_screen.Lock();
@@ -397,7 +415,7 @@ STDMETHODIMP  Pty_::_new_snapshot(Snapshot** pp){
     *pp = 0;
     m_screen.Lock();
     try{
-        *pp = m_screen.Current().GetSnapshot(_get_priv(Priv_RVideo), _get_priv(Priv_VisibleCur));
+        *pp = m_screen.Current().GetSnapshot(_get_priv(Priv_RVideo) != 0, _get_priv(Priv_VisibleCur) != 0);
     }
     catch(...){
     }
@@ -519,7 +537,7 @@ STDMETHODIMP  Pty_::PutKeyboard(ModKey key){
         return S_OK;
 
     case VK_BACK:
-        if(_get_priv(Priv_Backspace) ^ ((key & ModKey_Ctrl) ? true : false))
+        if((_get_priv(Priv_Backspace) != 0) ^ ((key & ModKey_Ctrl) != 0))
             cursor = '\x7F';
         else
             cursor = '\x08';
@@ -552,34 +570,6 @@ STDMETHODIMP  Pty_::PutKeyboard(ModKey key){
             put_vstring("\x1B%c%c", seq, cursor);
     }
 
-    return S_OK;
-}
-
-STDMETHODIMP  Pty_::PutMouse(int x, int y, ModKey key, int nclicks, VARIANT_BOOL* handled){
-    if(_get_priv(Priv_MouseModeMask)){
-        *handled = TRUE;
-        int w = m_screen.Current().GetPageWidth();
-        int h = m_screen.Current().GetPageHeight();
-        x = (x<0)? 1: (x<w)? x+1: w;
-        y = (y<0)? 1: (y<h)? y+1: h;
-        int v = 0x03;
-        if(nclicks > 0){
-            switch(key & ModKey_Key){
-            case VK_LBUTTON:  v=0x00;break;
-            case VK_MBUTTON:  v=0x01;break;
-            case VK_RBUTTON:  v=0x02;break;
-            case VK_XBUTTON1: v=0x40;break;
-            case VK_XBUTTON2: v=0x41;break;
-            }
-        }
-        if(key & ModKey_Shift) v |= 0x04;
-        if(key & ModKey_Alt)   v |= 0x08;
-        if(key & ModKey_Ctrl)  v |= 0x10;
-        put_vstring("\x1B[M%c%c%c", 0x20+v, 0x20+x, 0x20+y);
-    }
-    else{
-        *handled = FALSE;
-    }
     return S_OK;
 }
 
@@ -949,14 +939,14 @@ void Pty_::_process_sequence_window_ops(int n, int arg[], UpdateStore& upp){
     case 7://refresh window
         break;
     case 3://set position (pixel)
-        if(n >= 3){
+        if(n >= 3) {
             upp.mask = (UpdateMask)(upp.mask | UpdateMask_Pos);
             upp.posx = arg[1];
             upp.posy = arg[2];
         }
         break;
     case 8://set size (chars)
-        if(n >= 3){
+        if(n >= 3) {
             upp.mask = (UpdateMask)(upp.mask | UpdateMask_Size);
             upp.sizex = arg[1];
             upp.sizey = arg[2];
@@ -968,47 +958,97 @@ void Pty_::_process_sequence_window_ops(int n, int arg[], UpdateStore& upp){
 }
 
 //\x1B [ (int;int;int;...) m
-void Pty_::_process_sequence_sgr(int n, int arg[], UpdateStore& upp){
-    if(n<1) m_screen.Current().ClearStyle(CharFlag_Styles);
-    for(int i=0; i < n; i++){
-        switch(arg[i]){
-        case 0: m_screen.Current().ClearStyle(CharFlag_Styles);break;
-        case 1: m_screen.Current().SetStyle(CharFlag_Bold);break;
-        case 4: m_screen.Current().SetStyle(CharFlag_Uline);break;
-        case 5: m_screen.Current().SetStyle(CharFlag_Blink);break;
-        case 7: m_screen.Current().SetStyle(CharFlag_Invert);break;
-        case 22: m_screen.Current().ClearStyle(CharFlag_Bold);break;
-        case 24: m_screen.Current().ClearStyle(CharFlag_Uline);break;
-        case 25: m_screen.Current().ClearStyle(CharFlag_Blink);break;
-        case 27: m_screen.Current().ClearStyle(CharFlag_Invert);break;
-        case 30:case 31:case 32:case 33:
-        case 34:case 35:case 36:case 37:
-            m_screen.Current().SetStyleFG(arg[i] - 30);
+void Pty_::_process_sequence_sgr(int n, int arg[], UpdateStore& upp) {
+    Screen_& screen = m_screen.Current();
+    if(n < 1)
+        screen.ClearStyle(CharFlag_Styles);
+    for(int i=0; i < n; i++) {
+        switch (arg[i]) {
+        case 0: 
+            screen.ClearStyle(CharFlag_Styles);
             break;
-        case 40:case 41:case 42:case 43:
-        case 44:case 45:case 46:case 47:
-            m_screen.Current().SetStyleBG(arg[i] - 40);
+        case 1: 
+            screen.SetStyle(CharFlag_Bold);
             break;
-        case 90:case 91:case 92:case 93:
-        case 94:case 95:case 96:case 97:
-            m_screen.Current().SetStyleFG(arg[i] - 90 + 8);
+        case 4: 
+            screen.SetStyle(CharFlag_Uline);
             break;
-        case 100:case 101:case 102:case 103:
-        case 104:case 105:case 106:case 107:
-            m_screen.Current().SetStyleBG(arg[i] - 100 + 8);
+        case 5: 
+            screen.SetStyle(CharFlag_Blink);
+            break;
+        case 7: 
+            screen.SetStyle(CharFlag_Invert);
+            break;
+        case 22: 
+            screen.ClearStyle(CharFlag_Bold);
+            break;
+        case 24: 
+            screen.ClearStyle(CharFlag_Uline);
+            break;
+        case 25: 
+            screen.ClearStyle(CharFlag_Blink);
+            break;
+        case 27: 
+            screen.ClearStyle(CharFlag_Invert);
+            break;
+        case 30:
+        case 31:
+        case 32:
+        case 33:
+        case 34:
+        case 35:
+        case 36:
+        case 37:
+            screen.SetStyleFG(arg[i] - 30);
+            break;
+        case 40:
+        case 41:
+        case 42:
+        case 43:
+        case 44:
+        case 45:
+        case 46:
+        case 47:
+            screen.SetStyleBG(arg[i] - 40);
+            break;
+        case 90:
+        case 91:
+        case 92:
+        case 93:
+        case 94:
+        case 95:
+        case 96:
+        case 97:
+            screen.SetStyleFG(arg[i] - 90 + 8);
+            break;
+        case 100:
+        case 101:
+        case 102:
+        case 103:
+        case 104:
+        case 105:
+        case 106:
+        case 107:
+            screen.SetStyleBG(arg[i] - 100 + 8);
             break;
         case 38:
-            if(i+2 >= n)return;
-            if(arg[++i]==5)
-                m_screen.Current().SetStyleFG(arg[++i]);
+            if(i + 2 >= n)
+                return;
+            if(arg[++i] == 5)
+                screen.SetStyleFG(arg[++i]);
             break;
         case 48:
-            if(i+2 >= n)return;
-            if(arg[++i]==5)
-                m_screen.Current().SetStyleBG(arg[++i]);
+            if(i + 2 >= n)
+                return;
+            if(arg[++i] == 5)
+                screen.SetStyleBG(arg[++i]);
             break;
-        case 39: m_screen.Current().ClearStyle(CharFlag_FG);break;
-        case 49: m_screen.Current().ClearStyle(CharFlag_BG);break;
+        case 39: 
+            screen.ClearStyle(CharFlag_FG);
+            break;
+        case 49: 
+            screen.ClearStyle(CharFlag_BG);
+            break;
         }
     }
 }
@@ -1116,6 +1156,9 @@ void Pty_::_process_sequence_term_mode(char priv, int n, int arg[], UpdateStore&
         case 1060://keyboard type legacy
         case 1061://keyboard type VT220
             break;
+        case 2004://bracketed paste mode
+            _set_priv(priv, Priv_BracketedPasteMode, Priv_BracketedPasteMode);
+            break;
         }
     }
 }
@@ -1165,46 +1208,56 @@ bool Pty_::_process_sequence_csi(WCHAR* input, int& idx, int max, UpdateStore& u
         break;
     case 'A'://CUU cursor up
     case 'e'://VPR line position forward
-        if(arg0==0) arg0=1;
+        if(arg0 == 0) 
+            arg0=1;
         m_screen.Current().MoveCurY(-arg0);
         break;
     case 'B'://CUD cursor down
     case 'k'://VPB line position backward
-        if(arg0==0) arg0=1;
+        if(arg0 == 0) 
+            arg0=1;
         m_screen.Current().MoveCurY(+arg0);
         break;
     case 'C'://CUF cursor right
     case 'a'://HPR character position forward
-        if(arg0==0) arg0=1;
+        if(arg0 == 0) 
+            arg0=1;
         m_screen.Current().MoveCurX(+arg0);
         break;
     case 'D'://CUB cursor left
     case 'j'://HPB character position backward
-        if(arg0==0) arg0=1;
+        if(arg0 == 0)
+            arg0=1;
         m_screen.Current().MoveCurX(-arg0);
         break;
     case 'G'://CHA cursor character absolute
     case '`'://HPA cursor position absolute
-        if(arg0==0) arg0=1;
+        if(arg0 == 0) 
+            arg0 = 1;
         m_screen.Current().SetCurX(arg0-1);
         break;
     case 'd'://VPA line position absolute
-        if(arg0==0) arg0=1;
+        if(arg0 == 0) 
+            arg0 = 1;
         m_screen.Current().SetCurY(arg0-1);
         break;
     case 'H'://CUP cursor position
     case 'f'://HVP character and line position
-        if(arg0==0) arg0=1;
-        if(arg1==0) arg1=1;
+        if(arg0 == 0) 
+            arg0 = 1;
+        if(arg1 == 0) 
+            arg1 = 1;
         m_screen.Current().SetCurY(arg0-1);
         m_screen.Current().SetCurX(arg1-1);
         break;
     case 'Z'://CBT cursor backward tabulation
-        if(arg0==0) arg0=1;
+        if(arg0 == 0) 
+            arg0 = 1;
         m_screen.Current().MoveCurTab(-arg0);
         break;
     case 'I'://CBT cursor forward tabulation
-        if(arg0==0) arg0=1;
+        if(arg0==0) 
+            arg0=1;
         m_screen.Current().MoveCurTab(+arg0);
         break;
     case 'J'://ED erase in page
@@ -1239,11 +1292,11 @@ bool Pty_::_process_sequence_csi(WCHAR* input, int& idx, int max, UpdateStore& u
     case 'W'://CTC cursor tabulation control
         break;
     case 'l'://RM reset mode
-        if(arg0==4)
+        if(arg0 == 4)
             m_screen.Current().SetAddMode(false);
         break;
     case 'h'://SM set mode
-        if(arg0==4)
+        if(arg0 == 4)
             m_screen.Current().SetAddMode(true);
         break;
     case 's'://73
@@ -1253,9 +1306,12 @@ bool Pty_::_process_sequence_csi(WCHAR* input, int& idx, int max, UpdateStore& u
         m_screen.Current().RestoreCur();
         break;
     case 'r'://72
-        if(arg0==0) arg0=1;
-        if(arg1==0) arg1=1;
-        if(n < 2) arg1 = m_screen.Current().GetPageHeight();
+        if(arg0 == 0) 
+            arg0 = 1;
+        if(arg1 == 0) 
+            arg1 = 1;
+        if(n < 2) 
+            arg1 = m_screen.Current().GetPageHeight();
         if(arg0>=arg1) arg0=arg1=1;
         m_screen.Current().SetCurY(0);
         m_screen.Current().SetCurX(0);
@@ -1565,63 +1621,164 @@ bool Pty_::_process_sequence(WCHAR* input, int& idx, int max, UpdateStore& upp){
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 
-class Pty: public IDispatchImpl3<IPty>, public IPtyNotify_{
+class Pty: public IDispatchImpl3<IPty>, public IPtyNotify_ {
 protected:
     Pty_*  m_obj;
     IPtyNotify* const  m_notify;
     //
-    void _finalize(){
-        if(m_obj){ delete m_obj; m_obj=0; }
+    void _finalize()
+    {
+        if(m_obj) { 
+            delete m_obj; 
+            m_obj=0; 
+        }
     }
-    virtual ~Pty(){
+    virtual ~Pty()
+    {
         trace("Pty::dtor\n");
         _finalize();
     }
 public:
-    Pty(IPtyNotify* cb, BSTR cmdline): m_obj(0), m_notify(cb){
+    Pty(IPtyNotify* cb, BSTR cmdline): m_obj(0), m_notify(cb)
+    {
         trace("Pty::ctor\n");
         m_obj = new Pty_(this,cmdline);
     }
     //
-    STDMETHOD(OnClosed)()            { return m_notify->OnClosed(this); }
-    STDMETHOD(OnUpdateScreen)()        { return m_notify->OnUpdateScreen(this); }
-    STDMETHOD(OnUpdateTitle)()        { return m_notify->OnUpdateTitle(this); }
-    STDMETHOD(OnReqFont)(int id)        { return m_notify->OnReqFont(this,id); }
-    STDMETHOD(OnReqMove)(int x, int y)    { return m_notify->OnReqMove(this,x,y); }
-    STDMETHOD(OnReqResize)(int x, int y)    { return m_notify->OnReqResize(this,x,y); }
+    STDMETHOD(OnClosed)()
+    { 
+        return m_notify->OnClosed(this); 
+    }
+    STDMETHOD(OnUpdateScreen)()
+    {
+        return m_notify->OnUpdateScreen(this);
+    }
+    STDMETHOD(OnUpdateTitle)()
+    {
+        return m_notify->OnUpdateTitle(this);
+    }
+    STDMETHOD(OnReqFont)(int id)
+    {
+        return m_notify->OnReqFont(this,id); 
+    }
+    STDMETHOD(OnReqMove)(int x, int y)
+    {
+        return m_notify->OnReqMove(this,x,y);
+    }
+    STDMETHOD(OnReqResize)(int x, int y)
+    {
+        return m_notify->OnReqResize(this,x,y); 
+    }
     //
-    STDMETHOD(Dispose)(){
+    STDMETHOD(Dispose)()
+    {
         trace("Pty::dispose\n");
         _finalize();
         return S_OK;
     }
     //
-    STDMETHOD(get_PageWidth)(int* p) { return m_obj->get_PageWidth(p);}
-    STDMETHOD(get_PageHeight)(int* p){ return m_obj->get_PageHeight(p);}
-    STDMETHOD(get_CursorPosX)(int* p){ return m_obj->get_CursorPosX(p);}
-    STDMETHOD(get_CursorPosY)(int* p){ return m_obj->get_CursorPosY(p);}
-    STDMETHOD(get_Savelines)(int* p){ return m_obj->get_Savelines(p);}
-    STDMETHOD(put_Savelines)(int n) { return m_obj->put_Savelines(n);}
-    STDMETHOD(get_ViewPos)(int* p){ return m_obj->get_ViewPos(p);}
-    STDMETHOD(put_ViewPos)(int n) { return m_obj->put_ViewPos(n);}
-    STDMETHOD(get_InputEncoding)(Encoding* p){ return m_obj->get_InputEncoding(p);}
-    STDMETHOD(put_InputEncoding)(Encoding n) { return m_obj->put_InputEncoding(n);}
-    STDMETHOD(get_DisplayEncoding)(Encoding* p){ return m_obj->get_DisplayEncoding(p);}
-    STDMETHOD(put_DisplayEncoding)(Encoding n) { return m_obj->put_DisplayEncoding(n);}
-    STDMETHOD(get_PrivMode)(PrivMode* p){ return m_obj->get_PrivMode(p);}
-    STDMETHOD(put_PrivMode)(PrivMode n) { return m_obj->put_PrivMode(n);}
-    STDMETHOD(get_Title)(BSTR* pp){ return m_obj->get_Title(pp);}
-    STDMETHOD(put_Title)(BSTR p) { return m_obj->put_Title(p);}
-    STDMETHOD(get_CurrentDirectory)(BSTR* pp){ return m_obj->get_CurrentDirectory(pp);}
-    STDMETHOD(_new_snapshot)(Snapshot** pp){ return m_obj->_new_snapshot(pp);}
-    STDMETHOD(_del_snapshot)(Snapshot* p){ if(p) delete [] (BYTE*)p; return S_OK;}
-    STDMETHOD(Resize)(int w, int h){ return m_obj->Resize(w,h);}
-    STDMETHOD(Reset)(VARIANT_BOOL full){ return m_obj->Reset(full);}
-    STDMETHOD(PutString)(BSTR str){ return m_obj->PutString(str);}
-    STDMETHOD(PutKeyboard)(ModKey keycode){ return m_obj->PutKeyboard(keycode);}
-    STDMETHOD(PutMouse)(int x, int y, ModKey key, int nclicks, VARIANT_BOOL* handled){ return m_obj->PutMouse(x,y,key,nclicks,handled);}
-    STDMETHOD(SetSelection)(int x1, int y1, int x2, int y2, int mode){ return m_obj->SetSelection(x1,y1,x2,y2,mode);}
-    STDMETHOD(get_SelectedString)(BSTR* pp){ return m_obj->get_SelectedString(pp);}
+    STDMETHOD(get_PageWidth)(int* p)
+    {
+        return m_obj->get_PageWidth(p);
+    }
+    STDMETHOD(get_PageHeight)(int* p)
+    {
+        return m_obj->get_PageHeight(p);
+    }
+    STDMETHOD(get_CursorPosX)(int* p)
+    {
+        return m_obj->get_CursorPosX(p);
+    }
+    STDMETHOD(get_CursorPosY)(int* p)
+    {
+        return m_obj->get_CursorPosY(p);
+    }
+    STDMETHOD(get_Savelines)(int* p)
+    {
+        return m_obj->get_Savelines(p);
+    }
+    STDMETHOD(put_Savelines)(int n)
+    {
+        return m_obj->put_Savelines(n);
+    }
+    STDMETHOD(get_ViewPos)(int* p)
+    {
+        return m_obj->get_ViewPos(p);
+    }
+    STDMETHOD(put_ViewPos)(int n)
+    {
+        return m_obj->put_ViewPos(n);
+    }
+    STDMETHOD(get_InputEncoding)(Encoding* p)
+    {
+        return m_obj->get_InputEncoding(p);
+    }
+    STDMETHOD(put_InputEncoding)(Encoding n)
+    {
+        return m_obj->put_InputEncoding(n);
+    }
+    STDMETHOD(get_DisplayEncoding)(Encoding* p)
+    {
+        return m_obj->get_DisplayEncoding(p);
+    }
+    STDMETHOD(put_DisplayEncoding)(Encoding n)
+    {
+        return m_obj->put_DisplayEncoding(n);
+    }
+    STDMETHOD(get_PrivMode)(PrivMode* p)
+    {
+        return m_obj->get_PrivMode(p);
+    }
+    STDMETHOD(put_PrivMode)(PrivMode n)
+    {
+        return m_obj->put_PrivMode(n);
+    }
+    STDMETHOD(get_Title)(BSTR* pp)
+    {
+        return m_obj->get_Title(pp);
+    }
+    STDMETHOD(put_Title)(BSTR p)
+    {
+        return m_obj->put_Title(p);
+    }
+    STDMETHOD(get_CurrentDirectory)(BSTR* pp)
+    {
+        return m_obj->get_CurrentDirectory(pp);
+    }
+    STDMETHOD(_new_snapshot)(Snapshot** pp)
+    {
+        return m_obj->_new_snapshot(pp);
+    }
+    STDMETHOD(_del_snapshot)(Snapshot* p)
+    {
+        if(p) 
+            delete [] (BYTE*)p; 
+        return S_OK;
+    }
+    STDMETHOD(Resize)(int w, int h)
+    {
+        return m_obj->Resize(w,h);
+    }
+    STDMETHOD(Reset)(VARIANT_BOOL full)
+    {
+        return m_obj->Reset(full);
+    }
+    STDMETHOD(PutString)(BSTR str)
+    {
+        return m_obj->PutString(str);
+    }
+    STDMETHOD(PutKeyboard)(ModKey keycode)
+    {
+        return m_obj->PutKeyboard(keycode);
+    }
+    STDMETHOD(SetSelection)(int x1, int y1, int x2, int y2, int mode)
+    {
+        return m_obj->SetSelection(x1,y1,x2,y2,mode);
+    }
+    STDMETHOD(get_SelectedString)(BSTR* pp)
+    {
+        return m_obj->get_SelectedString(pp);
+    }
 };
 
 }//namespace Ck

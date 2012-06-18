@@ -113,6 +113,13 @@ cl.exe /nologo /c tlbimp.cpp
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">TARGET=2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Midl Include="interface.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\README.md" />
+    <None Include="script_sys.js" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

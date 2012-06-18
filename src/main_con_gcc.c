@@ -17,7 +17,7 @@
 #define _WIN32_WINNT 0x600
 #define WIN32_LEAN_AND_MEAN 1
 #define UNICODE  1
-#include <Windows.h>
+#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

@@ -198,6 +198,7 @@ var Priv ={
   ScrlTtyKey              :0x00040000,
   SmoothScrl              :0x00080000,
   VT52                    :0x00100000,
+  BracketedPasteMode      :0x00200000,
   UseBell                 :0x20000000,
   CjkWidth                :0x40000000
 };
@@ -284,7 +285,7 @@ function CONFIG(){
     mouse_middle  :MouseCmd.Paste,
     mouse_right  :MouseCmd.Menu,
     font_name  :"MS Gothic",
-    font_size  :12,
+    font_size  :15,
     background_file  :"",
     background_repeat_x  :Place.NoRepeat,
     background_repeat_y  :Place.NoRepeat,
@@ -292,8 +293,8 @@ function CONFIG(){
     background_align_y  :Align.Center,
     alpha_text_border  :0x00,
     alpha_back_colorN  :0xDD,
-    color_foreground  :0x000000,
-    color_background  :0xFFFFFFFF,
+    color_foreground  :0xFFFFFF,
+    color_background  :0xFF000000,
     color_selection    :0x660000FF,
     color_cursor    :0x00AA00,
     color_imecursor    :0xAA0000
@@ -718,8 +719,18 @@ var Commands ={
     return true;
   },
   tty_paste : function(window){
-    var p = window.Pty;
-    if(p) p.PutString(app.Clipboard);
+    var pty, message;
+
+	pty = window.Pty;
+	if (!pty)
+		return false;
+	alert((pty.PrivMode & Priv.BracketedPasteMode).toString(16) + "\n")
+	if (pty.PrivMode & Priv.BracketedPasteMode) {
+		message = "\x1b[200~" + app.Clipboard + "\x1b[201~";
+	} else {
+		message = app.Clipboard;
+	}
+    pty.PutString(message);
     return true;
   },
   tty_reset : function(window){
@@ -819,6 +830,9 @@ Events.base ={
         default:
           break;
       }
+	  if (button === 2) {
+		return false;
+	  }
       return true;
     }
     return false;
@@ -866,6 +880,9 @@ Events.base ={
         default:
           break;
       }
+	  if (button === 2) {
+		return false;
+	  }
       return true;
     }
     return false;

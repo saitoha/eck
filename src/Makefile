@@ -1,14 +1,35 @@
 
 CC = cl.exe
 LD = link.exe
+VSDIR=C:\Program Files\Microsoft Visual Studio 10.0\VC
+MSSDK=C:\Program Files\Microsoft SDKs\Windows\v7.0A
+CP = cp -f
 #CC = icl.exe /Qvc9
 #LD = xilink.exe
 
 #RM = rm -f
 RM = del
 
-CFLAGS  = /nologo /MT /W3 /Ox /fp:fast /arch:SSE2 /EHsc /GF /GR- /GS- /GL
-LDFLAGS = /nologo /release /machine:X86 /opt:ref /LTCG
+CFLAGS  = /nologo \
+		  /MT \
+		  /W3 \
+		  /Ox \
+		  /fp:fast \
+		  /arch:SSE2 \
+		  /EHsc \
+		  /GF \
+		  /GR- \
+		  /GS- \
+		  /GL \
+		  /I"$(VSDIR)\include" \
+		  /I"$(MSSDK)\Include" 
+LDFLAGS = /nologo \
+		  /release \
+		  /machine:X86 \
+		  /opt:ref \
+		  /LTCG \
+		  /LIBPATH:"$(VSDIR)\Lib" \
+		  /LIBPATH:"$(MSSDK)\Lib"
 #CFLAGS  = /nologo /MTd /W3 /Wp64 /Od /fp:fast /arch:SSE2 /EHsc /GF /GR- /GS- /Zi /DDEBUG /D_DEBUG
 #LDFLAGS = /nologo /debug /machine:X86
 
@@ -18,7 +39,7 @@ APP_CFLAGS =
 
 
 
-TARGET = ck.exe ck.app.dll  #ck.con.exe
+TARGET = ck.exe ck.app.dll ck.con.exe
 
 OBJS   = config.obj app.res app.obj window.obj util.obj \
 	pty.obj screen.obj encoding.obj encoding_table.obj
@@ -42,22 +63,24 @@ all: $(TARGET)
 ck.app.dll: cygwin1_app.lib interface.tlh $(OBJS)
 	$(LD) /dll /base:0x1E000000 $(LDFLAGS) /out:$@ $(OBJS)
 
-ck.con.exe: cygwin1_con.lib main_con.res main_con.obj
-	$(LD) $(LDFLAGS) /out:$@ main_con.obj chkstk.obj main_con.res
+#ck.con.exe: cygwin1_con.lib main_con.res main_con.obj
+#	$(LD) $(LDFLAGS) /out:$@ main_con.obj chkstk.obj main_con.res
+ck.con.exe:
+	gcc-4.exe main_con_gcc.c -o $@
 
 ck.exe: main_launch.res main_launch.obj
 	$(LD) $(LDFLAGS) /out:$@ main_launch.obj main_launch.res
 
 main_launch.res: rsrc.rc ck.ico
-	RC.Exe /l 0x409 /d TARGET=0 /fo $@ rsrc.rc
+	RC.Exe /nologo /l 0x409 /d TARGET=0 /fo $@ rsrc.rc
 main_con.res: rsrc.rc ck.ico
-	RC.Exe /l 0x409 /d TARGET=1 /fo $@ rsrc.rc
+	RC.Exe /nologo /l 0x409 /d TARGET=1 /fo $@ rsrc.rc
 app.res: rsrc.rc ck.ico interface.tlb script_sys.js
-	RC.Exe /l 0x409 /d TARGET=2 /fo $@ rsrc.rc
+	RC.Exe /nologo /l 0x409 /d TARGET=2 /fo $@ rsrc.rc
 
 
 interface.tlh: interface.tlb
-	cl.exe /nologo /c tlbimp.cpp
+	$(CC) $(CFLAGS) /nologo /c tlbimp.cpp
 main_launch.obj: main_launch.cpp
 	$(CC) $(CFLAGS) /c main_launch.cpp
 main_con.obj: main_con.cpp
@@ -71,7 +94,10 @@ config.obj: config.cpp config.h
 .def.lib:
 	lib.exe /nologo /machine:X86 /out:$@ /def:$<
 .idl.tlb:
-	Midl.Exe /nologo $<
+	midl.exe /nologo /I"$(MSSDK)\Include" $<
+
+zip: $(TARGET)
+	zip ck-bin.zip $(TARGET)
 
 clean: cle
 	$(RM) $(TARGET)

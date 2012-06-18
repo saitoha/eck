@@ -1,47 +1,50 @@
 ﻿import "docobj.idl";
 
-enum Encoding{
+enum Encoding {
     Encoding_EUCJP = 0x01,
     Encoding_SJIS  = 0x02,
     Encoding_UTF8  = 0x04,
 };
 
-enum PrivMode{
-    Priv_None                    = 0x00000000,
-    Priv_Col132                    = 0x00000001,
-    Priv_Allow132                = 0x00000002,
-    Priv_RVideo                    = 0x00000004,
-    Priv_RelOrg                    = 0x00000008,
-    Priv_Screen                    = 0x00000010,
-    Priv_AutoWrap                = 0x00000020,
-    Priv_AplCUR                    = 0x00000040,
-    Priv_AplKP                    = 0x00000080,
-    Priv_Backspace                = 0x00000100,
-    Priv_ShiftKey                = 0x00000200,
-    Priv_VisibleCur                = 0x00000400,
+enum PrivMode {
 
-    Priv_MouseModeMask            = 0x00003800,
+    Priv_None                   = 0x00000000,
+    Priv_Col132                 = 0x00000001,
+    Priv_Allow132               = 0x00000002,
+    Priv_RVideo                 = 0x00000004,
+    Priv_RelOrg                 = 0x00000008,
+    Priv_Screen                 = 0x00000010,
+    Priv_AutoWrap               = 0x00000020,
+    Priv_AplCUR                 = 0x00000040,
+    Priv_AplKP                  = 0x00000080,
+    Priv_Backspace              = 0x00000100,
+    Priv_ShiftKey               = 0x00000200,
+    Priv_VisibleCur             = 0x00000400,
+
+    Priv_MouseModeMask          = 0x00003800,
     Priv_MouseMode_None         = 0x00000000,
     Priv_MouseMode_Normal       = 0x00000800,
     Priv_MouseMode_Highlight    = 0x00001000,
     Priv_MouseMode_ButtonEvent  = 0x00001800,
     Priv_MouseMode_AnyEvent     = 0x00002000,
 
-    Priv_MouseProtocolMask        = 0x0000c000,
-    Priv_MouseProtocol_X11        = 0x00000000,
-    Priv_MouseProtocol_X10        = 0x00004000,
+    Priv_MouseProtocolMask      = 0x0000c000,
+    Priv_MouseProtocol_X11      = 0x00000000,
+    Priv_MouseProtocol_X10      = 0x00004000,
     Priv_MouseProtocol_Urxvt    = 0x00008000,
-    Priv_MouseProtocol_Sgr        = 0x0000c000,
+    Priv_MouseProtocol_Sgr      = 0x0000c000,
 
-    Priv_ScrlTtyOut                = 0x00020000,
-    Priv_ScrlTtyKey                = 0x00040000,
-    Priv_SmoothScrl                = 0x00080000,
-    Priv_VT52                    = 0x00100000,
+    Priv_ScrlTtyOut             = 0x00020000,
+    Priv_ScrlTtyKey             = 0x00040000,
+    Priv_SmoothScrl             = 0x00080000,
+    Priv_VT52                   = 0x00100000,
+    Priv_BracketedPasteMode     = 0x00200000,
     Priv_UseBell                = 0x20000000,
-    Priv_CjkWidth                = 0x40000000,
+    Priv_CjkWidth               = 0x40000000,
 };
 
-enum ModKey{
+enum ModKey {
+
     ModKey_ShiftL = 0x01000000,
     ModKey_ShiftR = 0x02000000,
     ModKey_CtrlL  = 0x04000000,
@@ -57,7 +60,7 @@ enum ModKey{
     ModKey_Alt    = ModKey_AltL   | ModKey_AltR,
 };
 
-enum CharFlag{
+enum CharFlag {
     CharFlag_Null    = 0x00000001,
     CharFlag_MbLead  = 0x00000002,
     CharFlag_MbTrail = 0x00000004,
@@ -72,13 +75,13 @@ enum CharFlag{
     CharFlag_Styles  = 0xFFFFFF00,
 };
 
-struct Char{
-    WCHAR    ch;
-    WORD    user;
+struct Char {
+    WCHAR ch;
+    WORD user;
     enum CharFlag flags;
 };
 
-struct Snapshot{
+struct Snapshot {
     int    width;
     int    height;
     int    view;
@@ -88,10 +91,11 @@ struct Snapshot{
     struct Char chars[1];
 };
 
-
 [object,dual,uuid(cc4fb945-b285-4396-90c6-a0069c2d672e)]
-interface IPty: IDispatch{
+interface IPty: IDispatch {
+
     HRESULT Dispose();
+    
     [propget] HRESULT PageWidth([out,retval] int* p);
     [propget] HRESULT PageHeight([out,retval] int* p);
     [propget] HRESULT CursorPosX([out,retval] int* p);
@@ -115,36 +119,39 @@ interface IPty: IDispatch{
     HRESULT Reset([in] VARIANT_BOOL full);
     HRESULT PutString([in] BSTR str);
     HRESULT PutKeyboard([in] enum ModKey keycode);
-    HRESULT PutMouse([in] int x, [in] int y, [in] enum ModKey key, [in] int nclicks, [out] VARIANT_BOOL* handled);
     HRESULT SetSelection([in] int x1, [in] int y1, [in] int x2, [in] int y2, [in] int mode);
     [propget] HRESULT SelectedString([out,retval] BSTR* pp);
 };
 
 //---
 
-enum Place{
+enum Place {
     Place_Scale,
     Place_Zoom,
     Place_Repeat,
     Place_NoRepeat,
 };
-enum Align{
+
+enum Align {
     Align_Near,
     Align_Center,
     Align_Far,
 };
-enum WinZOrder{
+
+enum WinZOrder {
     WinZOrder_Normal,
     WinZOrder_Top,
     WinZOrder_Bottom,
 };
-enum WinTransp{
+
+enum WinTransp {
     WinTransp_None,
     WinTransp_Transp,
     WinTransp_Grass,
     WinTransp_GrassNoEdge,
 };
-enum MouseCmd{
+
+enum MouseCmd {
     MouseCmd_None,
     MouseCmd_Select,
     MouseCmd_Paste,
@@ -153,8 +160,10 @@ enum MouseCmd{
 
 
 [object,dual,uuid(3d90d23f-35c1-4578-9272-647bcffc8313)]
-interface IWnd: IDispatch{
+interface IWnd: IDispatch {
+
     HRESULT Dispose();
+    
     [propget] HRESULT Handle([out,retval] UINT* p);
     [propget] HRESULT Pty([out,retval] VARIANT* p);
     [propput] HRESULT Pty([in] VARIANT var);
@@ -202,7 +211,7 @@ interface IWnd: IDispatch{
 //---
 
 [object,uuid(b32a3940-5f4c-4016-a5a7-a62f87c3df46)]
-interface IPtyNotify: IUnknown{
+interface IPtyNotify: IUnknown {
     HRESULT OnClosed([in] IPty* sender);
     HRESULT OnUpdateScreen([in] IPty* sender);
     HRESULT OnUpdateTitle([in] IPty* sender);
@@ -212,7 +221,8 @@ interface IPtyNotify: IUnknown{
 };
 
 [object,uuid(b40b45b0-c714-4d1e-9dd2-32f66148b8e6)]
-interface IWndNotify: IUnknown{
+interface IWndNotify: IUnknown {
+
     HRESULT OnClosed([in] IWnd* sender);
     HRESULT OnKeyDown([in] IWnd* sender, [in] DWORD vk);
     HRESULT OnMouseDown([in] IWnd* sender, 
@@ -244,10 +254,12 @@ interface IWndNotify: IUnknown{
 };
 
 [object,dual,uuid(77ff51e7-3f35-4e4b-aa88-d6fdb533dc4d)]
-interface IApp: IDispatch{
+interface IApp: IDispatch {
+
     HRESULT  trace([in] BSTR str);
     HRESULT  alert([in] BSTR str);
     HRESULT  Quit();
+
     [propget] HRESULT  Version([out,retval] BSTR* pp);
     [propget] HRESULT  IsDesktopComposition([out,retval] VARIANT_BOOL* p);
     [propget] HRESULT  ActiveWindow([out,retval] UINT* p);
@@ -276,8 +288,8 @@ interface IApp: IDispatch{
     HRESULT  EvalFile(BSTR cygpath);
 };
 
-[version(1.0),uuid(a41dbf65-7924-37dd-8e30-3a09b4979775)]
-library Ck{
+[version(4.0),uuid(a41dbf65-7924-37dd-8e30-3a09b4979775)]
+library Ck {
     enum Place;
     enum Align;
     interface IPtyNotify;
