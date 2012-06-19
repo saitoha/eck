@@ -97,7 +97,7 @@ config.obj: config.cpp config.h
 	midl.exe /nologo /I"$(MSSDK)\Include" $<
 
 zip: $(TARGET)
-	zip ck-bin.zip $(TARGET)
+	zip eck-$$(date +%y%m%d%H%M%S)-bin.zip $(TARGET) README.md COPYING.txt
 
 clean: cle
 	$(RM) $(TARGET)
