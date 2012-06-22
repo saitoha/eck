@@ -1159,6 +1159,9 @@ void Pty_::_process_sequence_term_mode(char priv, int n, int arg[], UpdateStore&
         case 2004://bracketed paste mode
             _set_priv(priv, Priv_BracketedPasteMode, Priv_BracketedPasteMode);
             break;
+        case 8840:// switch cjk width mode
+            _set_priv(priv, Priv_CjkWidth);
+            break;
         }
     }
 }
@@ -1613,7 +1616,8 @@ bool Pty_::_process_sequence(WCHAR* input, int& idx, int max, UpdateStore& upp) 
             }
         }
 
-        bool (*isdbl)(WCHAR) = _get_priv(Priv_CjkWidth) ? Enc::is_dblchar_cjk : Enc::is_dblchar;
+        bool (*isdbl)(WCHAR) 
+            = _get_priv(Priv_CjkWidth) ? Enc::is_dblchar_cjk : Enc::is_dblchar;
         if (isdbl(ch))
             m_screen.Current().AddCharMB(ch);
         else
