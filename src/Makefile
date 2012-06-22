@@ -98,6 +98,7 @@ config.obj: config.cpp config.h
 	midl.exe /nologo /client none $<
 
 zip: $(TARGET)
+	cp ../README.md ../COPYING.txt .
 	zip eck-$$(date +%y%m%d%H%M%S)-bin.zip $(TARGET) README.md COPYING.txt
 
 clean: cle
