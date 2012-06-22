@@ -57,10 +57,10 @@ namespace cygwin{
 }
 
 
-namespace Ck{
+namespace Ck {
 
 
-static BSTR get_child_current_directory(int cyg_pid){
+static BSTR get_child_current_directory(int cyg_pid) {
 
     static const BYTE srccode[]={
         0x55,                //push ebp
@@ -99,25 +99,25 @@ static BSTR get_child_current_directory(int cyg_pid){
     BSTR result = 0;
 
     int win_pid = cygwin_internal(cygwin::CW_CYGWIN_PID_TO_WINPID, cyg_pid);
-    if(win_pid < 1) return 0;
+    if (win_pid < 1) return 0;
 
     HANDLE process = OpenProcess(
         PROCESS_CREATE_THREAD| PROCESS_QUERY_INFORMATION| PROCESS_VM_OPERATION| PROCESS_VM_READ| PROCESS_VM_WRITE,
         FALSE, win_pid);
-    if(!process) return 0;
+    if (!process) return 0;
 
     BYTE* addr0 = (BYTE*) VirtualAllocEx(process, 0, sizeof(srccode),   MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     BYTE* addr1 = (BYTE*) VirtualAllocEx(process, 0, sizeof(WCHAR)*260, MEM_COMMIT, PAGE_READWRITE);
-    if(addr0 && addr1){
-        if(WriteProcessMemory(process, addr0, srccode, sizeof(srccode), 0)){
+    if (addr0 && addr1) {
+        if (WriteProcessMemory(process, addr0, srccode, sizeof(srccode), 0)) {
             HANDLE thread = CreateRemoteThread(process,0,0, (LPTHREAD_START_ROUTINE)addr0, addr1, 0,0);
-            if(thread){
-                if(WaitForSingleObject(thread, INFINITE) == WAIT_OBJECT_0){
+            if (thread) {
+                if (WaitForSingleObject(thread, INFINITE) == WAIT_OBJECT_0) {
                     DWORD len=0;
                     GetExitCodeThread(thread, &len);
-                    if(1<=len && len<=259){
+                    if (1<=len && len<=259) {
                         BSTR winpath = SysAllocStringLen(0, len+1);
-                        if(ReadProcessMemory(process, addr1, winpath, sizeof(WCHAR)*len, 0)){
+                        if (ReadProcessMemory(process, addr1, winpath, sizeof(WCHAR)*len, 0)) {
                             winpath[len] = '\0';
                             //trace("child_directory len=%d cpid=%d wpid=%d %S\n", len, cyg_pid, win_pid, winpath);
                             ((UINT*)winpath)[-1] = (UINT)(sizeof(WCHAR) * len);
@@ -131,8 +131,8 @@ static BSTR get_child_current_directory(int cyg_pid){
             }
         }
     }
-    if(addr1) VirtualFreeEx(process, addr1, 0, MEM_RELEASE);
-    if(addr0) VirtualFreeEx(process, addr0, 0, MEM_RELEASE);
+    if (addr1) VirtualFreeEx(process, addr1, 0, MEM_RELEASE);
+    if (addr0) VirtualFreeEx(process, addr0, 0, MEM_RELEASE);
 
     CloseHandle(process);
     return result;
@@ -148,41 +148,41 @@ private:
     int m_wincy;
     CRITICAL_SECTION m_cs;
 
-    void _finalize(){
-        if(m_buf) free(m_buf);
+    void _finalize() {
+        if (m_buf) free(m_buf);
         DeleteCriticalSection(&m_cs);
     }
 public:
-    ~WrQueue<T>(){ _finalize();}
-    WrQueue<T>(): m_buf(0),m_size(0),m_max(0),m_wincx(0),m_wincy(0){
+    ~WrQueue<T>() { _finalize(); }
+    WrQueue<T>(): m_buf(0),m_size(0),m_max(0),m_wincx(0),m_wincy(0) {
         InitializeCriticalSection(&m_cs);
         try{
             m_max = 256;
             m_buf = (T*) malloc(sizeof(T) * m_max);
-            if(!m_buf) throw std::bad_alloc();
+            if (!m_buf) throw std::bad_alloc();
         }
-        catch(...){
+        catch(...) {
             _finalize();
         }
     }
-    void Lock()  { EnterCriticalSection(&m_cs);}
-    void Unlock(){ LeaveCriticalSection(&m_cs);}
-    void SetWinSize(int x, int y){
+    void Lock()  { EnterCriticalSection(&m_cs); }
+    void Unlock() { LeaveCriticalSection(&m_cs); }
+    void SetWinSize(int x, int y) {
         Lock();
         m_wincx=x; m_wincy=y;
         Unlock();
     }
-    void Clear(){
+    void Clear() {
         Lock();
         m_size = 0;
         Unlock();
     }
-    void Push(T* p, int n){
-        if(n<1) return;
+    void Push(T* p, int n) {
+        if (n<1) return;
         Lock();
-        if(m_size+n > m_max){
+        if (m_size+n > m_max) {
             T* tmp = (T*) realloc(m_buf, sizeof(T) * (m_size+n));
-            if(!tmp){ Unlock(); throw std::bad_alloc(); }
+            if (!tmp) { Unlock(); throw std::bad_alloc(); }
             m_buf = tmp;
             m_max = m_size+n;
         }
@@ -191,22 +191,22 @@ public:
         Unlock();
     }
     //
-    void GetWinSize(int* x, int* y){
+    void GetWinSize(int* x, int* y) {
         *x=m_wincx; *y=m_wincy;
     }
-    void Pop(int n){
-        if(n>0){
-            if(n >= m_size)
+    void Pop(int n) {
+        if (n>0) {
+            if (n >= m_size)
                 m_size = 0;
-            else{
+            else {
                 memmove(m_buf, m_buf+n, sizeof(T)*(m_size-n));
                 m_size -= n;
             }
         }
     }
-    int Peek(T* p, int n){
-        if(n>m_size) n=m_size;
-        if(n>0) memcpy(p, m_buf, sizeof(T)*n);
+    int Peek(T* p, int n) {
+        if (n>m_size) n=m_size;
+        if (n>0) memcpy(p, m_buf, sizeof(T)*n);
         return n;
     }
 };
@@ -276,7 +276,7 @@ protected:
     }
     
     bool _set_priv(char mode, int mask, int flag = (int)Priv_None) {
-        if(mode == 't') 
+        if (mode == 't') 
             mode = (m_priv & mask) ? 'l' : 'h';
         m_priv = (PrivMode)(m_priv & ~mask);
         
@@ -297,31 +297,31 @@ protected:
         }
         return false;
     }
-    void _reset(bool full){
-        if(full) m_wr_buf.Clear();
+    void _reset(bool full) {
+        if (full) m_wr_buf.Clear();
         m_priv = (PrivMode)(Priv_VisibleCur | Priv_ScrlTtyKey | Priv_CjkWidth);
         m_jis_mode = 0;
         m_screen.Fore().Reset(full);
         m_screen.Back().Reset(full);
         m_screen.Set(false);
     }
-    void put_char(char ch){
+    void put_char(char ch) {
         m_wr_buf.Push((BYTE*)&ch, 1);
         SetEvent(m_wr_event);
     }
-    void put_string(const char* str){
+    void put_string(const char* str) {
         int len = (int)strlen(str);
-        if(len>0){
+        if (len>0) {
             m_wr_buf.Push((BYTE*)str, len);
             SetEvent(m_wr_event);
         }
     }
-    void put_vstring(const char* fmt, ...){
+    void put_vstring(const char* fmt, ...) {
         char buf[128];
         va_list va;
         va_start(va,fmt);
         size_t n=128;
-        if(SUCCEEDED(StringCchVPrintfExA(buf, 128, NULL, &n, 0, fmt, va))){
+        if (SUCCEEDED(StringCchVPrintfExA(buf, 128, NULL, &n, 0, fmt, va))) {
             m_wr_buf.Push((BYTE*)buf, (int)(128-n));
             SetEvent(m_wr_event);
         }
@@ -330,63 +330,63 @@ protected:
 
     void _finalize();
 public:
-    ~Pty_(){ _finalize();}
+    ~Pty_() { _finalize(); }
     Pty_(IPtyNotify_* cb, BSTR cmdline);
     //
-    STDMETHOD(get_PageWidth)(int* p){ *p = m_screen.Current().GetPageWidth(); return S_OK;}
-    STDMETHOD(get_PageHeight)(int* p){ *p = m_screen.Current().GetPageHeight(); return S_OK;}
-    STDMETHOD(get_CursorPosX)(int* p){ *p = m_screen.Current().GetCurX(); return S_OK;}
-    STDMETHOD(get_CursorPosY)(int* p){ *p = m_screen.Current().GetCurY(); return S_OK;}
+    STDMETHOD(get_PageWidth)(int* p) { *p = m_screen.Current().GetPageWidth(); return S_OK; }
+    STDMETHOD(get_PageHeight)(int* p) { *p = m_screen.Current().GetPageHeight(); return S_OK; }
+    STDMETHOD(get_CursorPosX)(int* p) { *p = m_screen.Current().GetCurX(); return S_OK; }
+    STDMETHOD(get_CursorPosY)(int* p) { *p = m_screen.Current().GetCurY(); return S_OK; }
     //
-    STDMETHOD(get_Savelines)(int* p){ *p = m_screen.Fore().GetSavelines(); return S_OK;}
-    STDMETHOD(put_Savelines)(int n){
+    STDMETHOD(get_Savelines)(int* p) { *p = m_screen.Fore().GetSavelines(); return S_OK; }
+    STDMETHOD(put_Savelines)(int n) {
         m_screen.Lock();
         m_screen.Fore().SetSavelines(n);
         m_screen.Unlock();
         m_notify->OnUpdateScreen();
         return S_OK;
     }
-    STDMETHOD(get_ViewPos)(int* p){ *p = m_screen.Current().GetViewPos(); return S_OK;}
-    STDMETHOD(put_ViewPos)(int n){
+    STDMETHOD(get_ViewPos)(int* p) { *p = m_screen.Current().GetViewPos(); return S_OK; }
+    STDMETHOD(put_ViewPos)(int n) {
         m_screen.Lock();
         int bak = m_screen.Current().GetViewPos();
         m_screen.Current().SetViewPos(n);
         int now = m_screen.Current().GetViewPos();
         m_screen.Unlock();
-        if(bak != now)
+        if (bak != now)
             m_notify->OnUpdateScreen();
         return S_OK;
     }
-    STDMETHOD(get_InputEncoding)(Encoding* p){ *p = m_input_encoding; return S_OK;}
-    STDMETHOD(put_InputEncoding)(Encoding n){ m_input_encoding = n; return S_OK;}
-    STDMETHOD(get_DisplayEncoding)(Encoding* p){ *p = m_display_encoding; return S_OK;}
-    STDMETHOD(put_DisplayEncoding)(Encoding n){ m_display_encoding = n; return S_OK;}
-    STDMETHOD(get_PrivMode)(PrivMode* p){ *p = m_priv; return S_OK;}
-    STDMETHOD(put_PrivMode)(PrivMode n){ m_screen.Lock(); m_priv=n; m_screen.Unlock(); return S_OK;}
-    STDMETHOD(get_Title)(BSTR* pp){
+    STDMETHOD(get_InputEncoding)(Encoding* p) { *p = m_input_encoding; return S_OK; }
+    STDMETHOD(put_InputEncoding)(Encoding n) { m_input_encoding = n; return S_OK; }
+    STDMETHOD(get_DisplayEncoding)(Encoding* p) { *p = m_display_encoding; return S_OK; }
+    STDMETHOD(put_DisplayEncoding)(Encoding n) { m_display_encoding = n; return S_OK; }
+    STDMETHOD(get_PrivMode)(PrivMode* p) { *p = m_priv; return S_OK; }
+    STDMETHOD(put_PrivMode)(PrivMode n) { m_screen.Lock(); m_priv=n; m_screen.Unlock(); return S_OK; }
+    STDMETHOD(get_Title)(BSTR* pp) {
         m_screen.Lock();
         *pp = SysAllocStringLen(m_title, SysStringLen(m_title));
         m_screen.Unlock();
         return S_OK;
     }
-    STDMETHOD(put_Title)(BSTR p){
+    STDMETHOD(put_Title)(BSTR p) {
         m_screen.Lock();
         BSTR bs = SysAllocStringLen(p, SysStringLen(p));
-        if(bs){
+        if (bs) {
             SysFreeString(m_title);
             m_title = bs;
         }
         m_screen.Unlock();
         return S_OK;
     }
-    STDMETHOD(get_CurrentDirectory)(BSTR* pp){
+    STDMETHOD(get_CurrentDirectory)(BSTR* pp) {
         *pp = get_child_current_directory(m_pid);
         return S_OK;
     }
     //
     STDMETHOD(_new_snapshot)(Snapshot** pp);
     STDMETHOD(Resize)(int w, int h);
-    STDMETHOD(Reset)(VARIANT_BOOL full){
+    STDMETHOD(Reset)(VARIANT_BOOL full) {
         m_screen.Lock();
         _reset(full ? true : false);
         m_screen.Unlock();
@@ -394,14 +394,14 @@ public:
     }
     STDMETHOD(PutKeyboard)(ModKey key);
     STDMETHOD(PutString)(BSTR str);
-    STDMETHOD(SetSelection)(int x1, int y1, int x2, int y2, int mode){
+    STDMETHOD(SetSelection)(int x1, int y1, int x2, int y2, int mode) {
         m_screen.Lock();
         m_screen.Current().SetSelection(x1,y1,x2,y2, mode);
         m_screen.Unlock();
         m_notify->OnUpdateScreen();
         return S_OK;
     }
-    STDMETHOD(get_SelectedString)(BSTR* pp){
+    STDMETHOD(get_SelectedString)(BSTR* pp) {
         m_screen.Lock();
         *pp = m_screen.Current().GetSelection();
         m_screen.Unlock();
@@ -411,20 +411,20 @@ public:
 
 //----------------------------------------------------------------------------
 
-STDMETHODIMP  Pty_::_new_snapshot(Snapshot** pp){
+STDMETHODIMP  Pty_::_new_snapshot(Snapshot** pp) {
     *pp = 0;
     m_screen.Lock();
     try{
         *pp = m_screen.Current().GetSnapshot(_get_priv(Priv_RVideo) != 0, _get_priv(Priv_VisibleCur) != 0);
     }
-    catch(...){
+    catch(...) {
     }
     m_screen.Unlock();
     return S_OK;
 }
 
-STDMETHODIMP  Pty_::Resize(int w, int h){
-    if(m_screen.Fore().GetPageWidth() != w || m_screen.Fore().GetPageHeight() != h){
+STDMETHODIMP  Pty_::Resize(int w, int h) {
+    if (m_screen.Fore().GetPageWidth() != w || m_screen.Fore().GetPageHeight() != h) {
         m_screen.Lock();
         m_screen.Fore().Resize(w,h);
         m_screen.Back().Resize(w,h);
@@ -438,11 +438,11 @@ STDMETHODIMP  Pty_::Resize(int w, int h){
     return S_OK;
 }
 
-STDMETHODIMP  Pty_::PutKeyboard(ModKey key){
+STDMETHODIMP  Pty_::PutKeyboard(ModKey key) {
     DWORD vk = (DWORD)(key & ModKey_Key);
 
-    if(key & ModKey_Shift) {
-        if(VK_F1 <= vk && vk <= VK_F10) {
+    if (key & ModKey_Shift) {
+        if (VK_F1 <= vk && vk <= VK_F10) {
             vk += VK_F11 - VK_F1;
             key = (ModKey)(key & ~ModKey_Shift);
         }
@@ -462,33 +462,33 @@ STDMETHODIMP  Pty_::PutKeyboard(ModKey key){
             state[VK_CAPITAL] = (key & ModKey_Caps ) ? 0xFF : 0x00;
             state[VK_SHIFT  ] = (key & ModKey_Shift) ? 0xFF : 0x00;
 
-            if(ToAscii(vk, 0, state, chars, 0) != 1)
+            if (ToAscii(vk, 0, state, chars, 0) != 1)
                 return S_OK;
 
             BYTE ch = (BYTE) chars[0];
 
-            if(key & ModKey_Ctrl) {
-                if('3' <= ch && ch <= '7')
+            if (key & ModKey_Ctrl) {
+                if ('3' <= ch && ch <= '7')
                     ch = 0x1B + (ch - '3');
-                else if(ch == '2' || ch == ' ')
+                else if (ch == '2' || ch == ' ')
                     ch = 0x00;
-                else if(ch == '8' || ch == '?')
+                else if (ch == '8' || ch == '?')
                     ch = 0x7F;
-                else if(ch == '-' || ch == '/')
+                else if (ch == '-' || ch == '/')
                     ch = 0x1F;
-                else if(ch >= 0x40)
+                else if (ch >= 0x40)
                     ch &= 0x1F;
             }
 
-            if(key & ModKey_Alt)
+            if (key & ModKey_Alt)
                 put_vstring("\x1B%c", ch);
             else
                 put_char(ch);
 
-            if(_get_priv(Priv_ScrlTtyKey)) {
+            if (_get_priv(Priv_ScrlTtyKey)) {
                 int bak = m_screen.Current().GetViewPos();
                 m_screen.Current().SetViewPos(-1);
-                if(bak != m_screen.Current().GetViewPos())
+                if (bak != m_screen.Current().GetViewPos())
                     m_notify->OnUpdateScreen();
             }
         }
@@ -537,12 +537,12 @@ STDMETHODIMP  Pty_::PutKeyboard(ModKey key){
         return S_OK;
 
     case VK_BACK:
-        if((_get_priv(Priv_Backspace) != 0) ^ ((key & ModKey_Ctrl) != 0))
+        if ((_get_priv(Priv_Backspace) != 0) ^ ((key & ModKey_Ctrl) != 0))
             cursor = '\x7F';
         else
             cursor = '\x08';
 
-        if(key & ModKey_Alt)
+        if (key & ModKey_Alt)
             put_vstring("\x1B%c", cursor);
         else
             put_char(cursor);
@@ -550,21 +550,21 @@ STDMETHODIMP  Pty_::PutKeyboard(ModKey key){
 
     }
 
-    if(number) {
+    if (number) {
         char mod = (key & ModKey_Shift) ? (key & ModKey_Ctrl) ? '@' : '$' : '~';
-        if(key & ModKey_Alt)
+        if (key & ModKey_Alt)
             put_vstring("\x1B\x1B[%d%c", number, mod);
         else
             put_vstring("\x1B[%d%c", number, mod);
     }
-    else if(cursor) {
+    else if (cursor) {
         char    seq;
-        if(key & ModKey_Shift)         { seq = '['; }
-        else if(key & ModKey_Ctrl)     { seq = 'O'; }
-        else if(_get_priv(Priv_AplCUR)){ seq = 'O'; cursor -= 0x20; }
+        if (key & ModKey_Shift)         { seq = '['; }
+        else if (key & ModKey_Ctrl)     { seq = 'O'; }
+        else if (_get_priv(Priv_AplCUR)) { seq = 'O'; cursor -= 0x20; }
         else                           { seq = '['; cursor -= 0x20; }
 
-        if(key & ModKey_Alt)
+        if (key & ModKey_Alt)
             put_vstring("\x1B\x1B%c%c", seq, cursor);
         else
             put_vstring("\x1B%c%c", seq, cursor);
@@ -573,47 +573,47 @@ STDMETHODIMP  Pty_::PutKeyboard(ModKey key){
     return S_OK;
 }
 
-STDMETHODIMP  Pty_::PutString(BSTR str){
+STDMETHODIMP  Pty_::PutString(BSTR str) {
     int len = (int) SysStringLen(str);
-    if(len<1)return S_OK;
+    if (len<1)return S_OK;
 
     BYTE* tmp;
     BYTE* p;
-    if(m_input_encoding & Encoding_UTF8){
+    if (m_input_encoding & Encoding_UTF8) {
         p=tmp = new BYTE[len*3];
         int i=0;
         do{
-            if(str[i] & 0xF800){
+            if (str[i] & 0xF800) {
                 *p++ = 0xE0 | (str[i]>>12);
                 *p++ = 0x80 | ((str[i]&0x0FC0)>>6);
                 *p++ = 0x80 | (str[i]&0x003F);
             }
-            else if(str[i] & 0x0780){
+            else if (str[i] & 0x0780) {
                 *p++ = 0xC0 | (str[i]>>6);
                 *p++ = 0x80 | (str[i]&0x003F);
             }
-            else{
+            else {
                 *p++ = (BYTE)(str[i]);
             }
-        }while(++i < len);
+        }while (++i < len);
     }
-    else if(m_input_encoding & Encoding_SJIS){
+    else if (m_input_encoding & Encoding_SJIS) {
         p=tmp = new BYTE[len*2];
         int i=0;
         do{
             unsigned short c = Enc::ucs_to_sjis(str[i]);
-            if(c>>8) *p++ = (BYTE)(c>>8);
+            if (c>>8) *p++ = (BYTE)(c>>8);
             *p++ = (BYTE)(c);
-        }while(++i < len);
+        }while (++i < len);
     }
-    else{
+    else {
         p=tmp = new BYTE[len*2];
         int i=0;
         do{
             unsigned short c = Enc::ucs_to_eucj(str[i]);
-            if(c>>8) *p++ = (BYTE)(c>>8);
+            if (c>>8) *p++ = (BYTE)(c>>8);
             *p++ = (BYTE)(c);
-        }while(++i < len);
+        }while (++i < len);
     }
 
     m_wr_buf.Push(tmp, (int)((BYTE*)p - (BYTE*)tmp));
@@ -627,37 +627,37 @@ STDMETHODIMP  Pty_::PutString(BSTR str){
 //----------------------------------------------------------------------------
 
 
-void Pty_::_finalize(){
+void Pty_::_finalize() {
     trace("Pty_::dtor\n");
-    if(m_fd != -1){
+    if (m_fd != -1) {
         cygwin::close(m_fd);
         //
-        if(m_wr_thread){
+        if (m_wr_thread) {
             BYTE buf[1] = {' '};
             m_wr_buf.Push(buf,1);
             SetEvent(m_wr_event);
         }
     }
-    if(m_rd_thread){
-        if(WaitForSingleObject(m_rd_thread, 5000)==WAIT_TIMEOUT)
+    if (m_rd_thread) {
+        if (WaitForSingleObject(m_rd_thread, 5000)==WAIT_TIMEOUT)
             TerminateThread(m_rd_thread, 0);
         CloseHandle(m_rd_thread);
     }
-    if(m_wr_thread){
-        if(WaitForSingleObject(m_wr_thread, 5000)==WAIT_TIMEOUT)
+    if (m_wr_thread) {
+        if (WaitForSingleObject(m_wr_thread, 5000)==WAIT_TIMEOUT)
             TerminateThread(m_wr_thread, 0);
         CloseHandle(m_wr_thread);
     }
-    if(m_wr_event){
+    if (m_wr_event) {
         CloseHandle(m_wr_event);
     }
-    if(m_pid > 0){
-        if(cygwin::waitpid(m_pid, 0, cygwin::WNOHANG)==0){
+    if (m_pid > 0) {
+        if (cygwin::waitpid(m_pid, 0, cygwin::WNOHANG)==0) {
             cygwin::kill(m_pid, cygwin::SIGHUP);
             cygwin::kill(m_pid, cygwin::SIGINT);
         }
     }
-    if(m_title){
+    if (m_title) {
         SysFreeString(m_title);
     }
 }
@@ -673,36 +673,36 @@ Pty_::Pty_(IPtyNotify_* cb, BSTR cmdline)
       m_input_encoding(Encoding_SJIS),
       m_display_encoding((Encoding)(Encoding_EUCJP | Encoding_SJIS | Encoding_UTF8)),
       m_jis_mode(0),
-      m_title(0){
+      m_title(0) {
     //
     trace("Pty_::ctor\n");
     try{
         m_title = SysAllocString(L"ck");
-        if(!m_title) throw std::bad_alloc();
+        if (!m_title) throw std::bad_alloc();
 
         int pid,fd;
         HRESULT hr = cyg_execpty(cmdline, &pid, &fd);
-        if(FAILED(hr)) throw hr;
+        if (FAILED(hr)) throw hr;
 
         trace(" forkpty pid=%d fd=%d\n", pid,fd);
         m_pid = pid;
         m_fd = fd;
 
         m_wr_event = CreateEvent(0,FALSE,FALSE,0);
-        if(!m_wr_event) throw static_cast<HRESULT>(E_FAIL);
+        if (!m_wr_event) throw static_cast<HRESULT>(E_FAIL);
 
         m_rd_thread = (HANDLE) _beginthreadex(0,0, read_proc,this, 0,0);
         m_wr_thread = (HANDLE) _beginthreadex(0,0, write_proc,this, 0,0);
         //no check
     }
-    catch(...){
+    catch(...) {
         _finalize();
         throw;
     }
 }
 
 
-UINT CALLBACK Pty_::read_proc(LPVOID lp){
+UINT CALLBACK Pty_::read_proc(LPVOID lp) {
     Pty_* p = (Pty_*) lp;
     const int RAWSIZE = 65536;
     const int WCSIZE = 65536;
@@ -712,18 +712,18 @@ UINT CALLBACK Pty_::read_proc(LPVOID lp){
     int wcsize = 0;
     UpdateStore upp;
 
-    for(;;){
+    for (;;) {
         int n = cygwin::read(p->m_fd, rawbuf+rawsize, RAWSIZE-rawsize);
-        if(n<=0) goto EXIT;
+        if (n<=0) goto EXIT;
         rawsize += n;
 
-        while(rawsize < RAWSIZE-512){
+        while (rawsize < RAWSIZE-512) {
             struct cygwin::pollfd pfd = { p->m_fd, cygwin::POLLIN, 0 };
             n = cygwin::poll(&pfd, 1, 0);
-            if(!(pfd.revents & cygwin::POLLIN)) break;
+            if (!(pfd.revents & cygwin::POLLIN)) break;
 
             n = cygwin::read(p->m_fd, rawbuf+rawsize, RAWSIZE-rawsize);
-            if(n<=0) goto EXIT;
+            if (n<=0) goto EXIT;
             rawsize += n;
         }
         //trace("N=%d\n", rawsize);
@@ -731,7 +731,7 @@ UINT CALLBACK Pty_::read_proc(LPVOID lp){
         //convert byte to wchar
         int rl = rawsize;
         int wl = WCSIZE - wcsize;
-        switch( Enc::detect_encoding(rawbuf, rl, p->m_display_encoding)){
+        switch( Enc::detect_encoding(rawbuf, rl, p->m_display_encoding)) {
         case Encoding_UTF8:
             Enc::utf8_to_ucs(rawbuf, &rl, wcbuf+wcsize, &wl);
             break;
@@ -742,18 +742,18 @@ UINT CALLBACK Pty_::read_proc(LPVOID lp){
             Enc::eucj_to_ucs(rawbuf, &rl, wcbuf+wcsize, &wl);
             break;
         }
-        if(wl<=0) continue;
-        if(rawsize > rl)
+        if (wl<=0) continue;
+        if (rawsize > rl)
             memmove(rawbuf, rawbuf+rl, rawsize-rl);
         rawsize -= rl;//remove
         wcsize += wl;//append
 
         #if 0
-        for(int i=0; i < wcsize; i++){
-            if(0x20 <= wcbuf[i] && wcbuf[i] <= 0x7E){
+        for (int i=0; i < wcsize; i++) {
+            if (0x20 <= wcbuf[i] && wcbuf[i] <= 0x7E) {
                 fputc((char)wcbuf[i], stdout);
             }
-            else{
+            else {
                 fprintf(stdout, "\\x%x", wcbuf[i]);
             }
         }
@@ -764,31 +764,31 @@ UINT CALLBACK Pty_::read_proc(LPVOID lp){
         upp.mask = (UpdateMask)0;
         wl=0;
         p->m_screen.Lock();
-        for(;;){
+        for (;;) {
             int bak=wl;
-            if(!p->_process_sequence(wcbuf, wl, wcsize, upp)){
+            if (!p->_process_sequence(wcbuf, wl, wcsize, upp)) {
                 wl=bak;
                 break;
             }
         }
-        if(p->_get_priv(Priv_ScrlTtyOut)){
+        if (p->_get_priv(Priv_ScrlTtyOut)) {
             p->m_screen.Current().SetViewPos(-1);
         }
         p->m_screen.Unlock();
-        if(wcsize > wl)
+        if (wcsize > wl)
             memmove(wcbuf, wcbuf+wl, sizeof(WCHAR)*(wcsize-wl));
         wcsize -= wl;
-        if(wcsize > 4096){
+        if (wcsize > 4096) {
             //error
             wcsize = 0;
         }
         //
 
         p->m_notify->OnUpdateScreen();
-        if(upp.mask & UpdateMask_Title) p->m_notify->OnUpdateTitle();
-        if(upp.mask & UpdateMask_Font)  p->m_notify->OnReqFont(upp.font);
-        if(upp.mask & UpdateMask_Pos)   p->m_notify->OnReqMove(upp.posx, upp.posy);
-        if(upp.mask & UpdateMask_Size)  p->m_notify->OnReqResize(upp.sizex, upp.sizey);
+        if (upp.mask & UpdateMask_Title) p->m_notify->OnUpdateTitle();
+        if (upp.mask & UpdateMask_Font)  p->m_notify->OnReqFont(upp.font);
+        if (upp.mask & UpdateMask_Pos)   p->m_notify->OnReqMove(upp.posx, upp.posy);
+        if (upp.mask & UpdateMask_Size)  p->m_notify->OnReqResize(upp.sizex, upp.sizey);
     }
 
     EXIT:
@@ -800,7 +800,7 @@ UINT CALLBACK Pty_::read_proc(LPVOID lp){
     return 0;
 }
 
-UINT CALLBACK Pty_::write_proc(LPVOID lp){
+UINT CALLBACK Pty_::write_proc(LPVOID lp) {
     Pty_* p = (Pty_*) lp;
     const int IOCTL_WAIT = 250; //250ms
     const int RAWSIZE = 512;
@@ -811,9 +811,9 @@ UINT CALLBACK Pty_::write_proc(LPVOID lp){
     int   last_y = 0;
     int   x,y,n;
     DWORD now,dw;
-    for(;;){
+    for (;;) {
         dw = WaitForSingleObject(p->m_wr_event, timeout);
-        if(dw != WAIT_OBJECT_0 && dw != WAIT_TIMEOUT)
+        if (dw != WAIT_OBJECT_0 && dw != WAIT_TIMEOUT)
             break;
         n = 0;
         do{
@@ -823,29 +823,29 @@ UINT CALLBACK Pty_::write_proc(LPVOID lp){
             n = p->m_wr_buf.Peek(rawbuf, RAWSIZE);
             p->m_wr_buf.Unlock();
             //
-            if(n>0){
+            if (n>0) {
                 RETRY:
                 int wn = cygwin::write(p->m_fd, rawbuf, n);
-                if(wn==0 && *(cyg_errno()) == 0){
+                if (wn==0 && *(cyg_errno()) == 0) {
                     Sleep(16);
                     goto RETRY;
                 }
-                if(wn <= 0){
+                if (wn <= 0) {
                     goto EXIT;
                 }
                 n = wn;
             }
             //
-            if(x == last_x && y == last_y){
+            if (x == last_x && y == last_y) {
                 timeout = INFINITE;
             }
-            else{
+            else {
                 now = GetTickCount();
                 dw = (now > last_time)? now-last_time: last_time - ~now +1;
-                if(dw < IOCTL_WAIT){
+                if (dw < IOCTL_WAIT) {
                     timeout = IOCTL_WAIT - dw;
                 }
-                else{
+                else {
                     timeout = INFINITE;
                     struct cygwin::winsize ws={(unsigned short)y, (unsigned short)x,0,0};
                     cygwin::ioctl(p->m_fd, cygwin::TIOCSWINSZ, &ws);
@@ -854,7 +854,7 @@ UINT CALLBACK Pty_::write_proc(LPVOID lp){
                     last_y = y;
                 }
             }
-        }while(n>0);
+        }while (n>0);
     }
 
     EXIT:
@@ -866,59 +866,59 @@ UINT CALLBACK Pty_::write_proc(LPVOID lp){
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 
-static int get_int_arg(int dst[], WCHAR* input, int& idx, int max){
+static int get_int_arg(int dst[], WCHAR* input, int& idx, int max) {
     int n=0;
     int v=-1;
-    for(;;){
-        if(idx >= max) return -1;
+    for (;;) {
+        if (idx >= max) return -1;
         WCHAR c = input[idx];
-        if('0'<=c && c<='9'){
-            if(v >= 0)
+        if ('0'<=c && c<='9') {
+            if (v >= 0)
                 v = (v*10) + (c-'0');
             else
                 v = (c-'0');
         }
-        else{
-            if(v >= 0){
+        else {
+            if (v >= 0) {
                 dst[n++] = v;
-                if(n >= 32)break;
+                if (n >= 32)break;
                 v = -1;
             }
-            if(c != ';')break;
+            if (c != ';')break;
         }
         idx++;
     }
     return n;
 }
-static bool get_str_arg(WCHAR dst[], WCHAR* input, int& idx, int max){
+static bool get_str_arg(WCHAR dst[], WCHAR* input, int& idx, int max) {
     int n=0;
-    for(;;){
-        if(idx >= max) return false;
+    for (;;) {
+        if (idx >= max) return false;
         WCHAR c = input[idx];
-        if(c=='\x1B'){
-            if(idx+1 >= max)return false;
-            if(input[idx+1]=='\x5C') idx+=2;//7bitST(\x1B\x5C)
+        if (c=='\x1B') {
+            if (idx+1 >= max)return false;
+            if (input[idx+1]=='\x5C') idx+=2;//7bitST(\x1B\x5C)
             break;
         }
-        else if(c=='\t'){
+        else if (c=='\t') {
             c=' ';
         }
-        else if(c<='\x1F' || c==L'\x9C'){
+        else if (c<='\x1F' || c==L'\x9C') {
             //BEL(\07), ST(\9C)
             break;
         }
         idx++;
         dst[n++] = c;
-        if(n>=255)break;
+        if (n>=255)break;
     }
     dst[n] = '\0';
     return true;
 }
 
 // \x1B [ (int;int;int;...) t
-void Pty_::_process_sequence_window_ops(int n, int arg[], UpdateStore& upp){
-    if(n<1) return;
-    switch(arg[0]){
+void Pty_::_process_sequence_window_ops(int n, int arg[], UpdateStore& upp) {
+    if (n<1) return;
+    switch(arg[0]) {
     case 11://report window size
         put_string("\x1B[1t");
         break;
@@ -939,14 +939,14 @@ void Pty_::_process_sequence_window_ops(int n, int arg[], UpdateStore& upp){
     case 7://refresh window
         break;
     case 3://set position (pixel)
-        if(n >= 3) {
+        if (n >= 3) {
             upp.mask = (UpdateMask)(upp.mask | UpdateMask_Pos);
             upp.posx = arg[1];
             upp.posy = arg[2];
         }
         break;
     case 8://set size (chars)
-        if(n >= 3) {
+        if (n >= 3) {
             upp.mask = (UpdateMask)(upp.mask | UpdateMask_Size);
             upp.sizex = arg[1];
             upp.sizey = arg[2];
@@ -960,9 +960,9 @@ void Pty_::_process_sequence_window_ops(int n, int arg[], UpdateStore& upp){
 //\x1B [ (int;int;int;...) m
 void Pty_::_process_sequence_sgr(int n, int arg[], UpdateStore& upp) {
     Screen_& screen = m_screen.Current();
-    if(n < 1)
+    if (n < 1)
         screen.ClearStyle(CharFlag_Styles);
-    for(int i=0; i < n; i++) {
+    for (int i=0; i < n; i++) {
         switch (arg[i]) {
         case 0: 
             screen.ClearStyle(CharFlag_Styles);
@@ -1032,15 +1032,15 @@ void Pty_::_process_sequence_sgr(int n, int arg[], UpdateStore& upp) {
             screen.SetStyleBG(arg[i] - 100 + 8);
             break;
         case 38:
-            if(i + 2 >= n)
+            if (i + 2 >= n)
                 return;
-            if(arg[++i] == 5)
+            if (arg[++i] == 5)
                 screen.SetStyleFG(arg[++i]);
             break;
         case 48:
-            if(i + 2 >= n)
+            if (i + 2 >= n)
                 return;
-            if(arg[++i] == 5)
+            if (arg[++i] == 5)
                 screen.SetStyleBG(arg[++i]);
             break;
         case 39: 
@@ -1054,9 +1054,9 @@ void Pty_::_process_sequence_sgr(int n, int arg[], UpdateStore& upp) {
 }
 
 //\x1B [ ? (int;int;int;...) h,l
-void Pty_::_process_sequence_term_mode(char priv, int n, int arg[], UpdateStore& upp){
-    for(int i=0; i < n; i++){
-        switch(arg[i]){
+void Pty_::_process_sequence_term_mode(char priv, int n, int arg[], UpdateStore& upp) {
+    for (int i=0; i < n; i++) {
+        switch(arg[i]) {
         case 1://DECCKM application cursor keys
             _set_priv(priv, Priv_AplCUR);
             break;
@@ -1164,10 +1164,10 @@ void Pty_::_process_sequence_term_mode(char priv, int n, int arg[], UpdateStore&
 }
 
 // \x1B [ (...)
-bool Pty_::_process_sequence_csi(WCHAR* input, int& idx, int max, UpdateStore& upp){
-    if(idx >= max) return false;
+bool Pty_::_process_sequence_csi(WCHAR* input, int& idx, int max, UpdateStore& upp) {
+    if (idx >= max) return false;
     char priv = '\0';
-    switch(input[idx]){
+    switch(input[idx]) {
     case '<':
     case '>':
     case '=':
@@ -1178,15 +1178,15 @@ bool Pty_::_process_sequence_csi(WCHAR* input, int& idx, int max, UpdateStore& u
 
     int arg[32];
     int n = get_int_arg(arg, input, idx, max);
-    if(n<0) return false;
+    if (n<0) return false;
 
-    if(idx >= max)return false;
-    if(priv){
-        if(priv=='>' && input[idx]=='c'){//DA
+    if (idx >= max)return false;
+    if (priv) {
+        if (priv=='>' && input[idx]=='c') {//DA
             put_string("\x1B[>82;20710;0c");//rxvt version 'R';20710;0c
             idx++;
         }
-        else if(priv=='?'){
+        else if (priv=='?') {
             _process_sequence_term_mode((char)input[idx++], n, arg, upp);
         }
         return true;
@@ -1195,68 +1195,68 @@ bool Pty_::_process_sequence_csi(WCHAR* input, int& idx, int max, UpdateStore& u
     int arg0 = (n>=1) ? arg[0]: 0;
     int arg1 = (n>=2) ? arg[1]: 0;
 
-    switch(input[idx++]){
+    switch(input[idx++]) {
     case 'F'://CPL cursor pending line
-        if(arg0==0) arg0=1;
+        if (arg0==0) arg0=1;
         m_screen.Current().MoveCurY(-arg0);
         m_screen.Current().SetCurX(0);
         break;
     case 'E'://CNL cursor next line
-        if(arg0==0) arg0=1;
+        if (arg0==0) arg0=1;
         m_screen.Current().MoveCurY(+arg0);
         m_screen.Current().SetCurX(0);
         break;
     case 'A'://CUU cursor up
     case 'e'://VPR line position forward
-        if(arg0 == 0) 
+        if (arg0 == 0) 
             arg0=1;
         m_screen.Current().MoveCurY(-arg0);
         break;
     case 'B'://CUD cursor down
     case 'k'://VPB line position backward
-        if(arg0 == 0) 
+        if (arg0 == 0) 
             arg0=1;
         m_screen.Current().MoveCurY(+arg0);
         break;
     case 'C'://CUF cursor right
     case 'a'://HPR character position forward
-        if(arg0 == 0) 
+        if (arg0 == 0) 
             arg0=1;
         m_screen.Current().MoveCurX(+arg0);
         break;
     case 'D'://CUB cursor left
     case 'j'://HPB character position backward
-        if(arg0 == 0)
+        if (arg0 == 0)
             arg0=1;
         m_screen.Current().MoveCurX(-arg0);
         break;
     case 'G'://CHA cursor character absolute
     case '`'://HPA cursor position absolute
-        if(arg0 == 0) 
+        if (arg0 == 0) 
             arg0 = 1;
         m_screen.Current().SetCurX(arg0-1);
         break;
     case 'd'://VPA line position absolute
-        if(arg0 == 0) 
+        if (arg0 == 0) 
             arg0 = 1;
         m_screen.Current().SetCurY(arg0-1);
         break;
     case 'H'://CUP cursor position
     case 'f'://HVP character and line position
-        if(arg0 == 0) 
+        if (arg0 == 0) 
             arg0 = 1;
-        if(arg1 == 0) 
+        if (arg1 == 0) 
             arg1 = 1;
         m_screen.Current().SetCurY(arg0-1);
         m_screen.Current().SetCurX(arg1-1);
         break;
     case 'Z'://CBT cursor backward tabulation
-        if(arg0 == 0) 
+        if (arg0 == 0) 
             arg0 = 1;
         m_screen.Current().MoveCurTab(-arg0);
         break;
     case 'I'://CBT cursor forward tabulation
-        if(arg0==0) 
+        if (arg0==0) 
             arg0=1;
         m_screen.Current().MoveCurTab(+arg0);
         break;
@@ -1292,11 +1292,11 @@ bool Pty_::_process_sequence_csi(WCHAR* input, int& idx, int max, UpdateStore& u
     case 'W'://CTC cursor tabulation control
         break;
     case 'l'://RM reset mode
-        if(arg0 == 4)
+        if (arg0 == 4)
             m_screen.Current().SetAddMode(false);
         break;
     case 'h'://SM set mode
-        if(arg0 == 4)
+        if (arg0 == 4)
             m_screen.Current().SetAddMode(true);
         break;
     case 's'://73
@@ -1306,13 +1306,13 @@ bool Pty_::_process_sequence_csi(WCHAR* input, int& idx, int max, UpdateStore& u
         m_screen.Current().RestoreCur();
         break;
     case 'r'://72
-        if(arg0 == 0) 
+        if (arg0 == 0) 
             arg0 = 1;
-        if(arg1 == 0) 
+        if (arg1 == 0) 
             arg1 = 1;
-        if(n < 2) 
+        if (n < 2) 
             arg1 = m_screen.Current().GetPageHeight();
-        if(arg0>=arg1) arg0=arg1=1;
+        if (arg0>=arg1) arg0=arg1=1;
         m_screen.Current().SetCurY(0);
         m_screen.Current().SetCurX(0);
         m_screen.Current().SetRegion(arg0-1, arg1-1);
@@ -1324,7 +1324,7 @@ bool Pty_::_process_sequence_csi(WCHAR* input, int& idx, int max, UpdateStore& u
         _process_sequence_sgr(n,arg,upp);
         break;
     case 'n'://DSR device status report
-        switch(arg0){
+        switch(arg0) {
         case 5:
             put_string("\x1B[0n");
             break;
@@ -1341,32 +1341,38 @@ bool Pty_::_process_sequence_csi(WCHAR* input, int& idx, int max, UpdateStore& u
 }
 
 // \x1B ] (int;string) \x07
-bool Pty_::_process_sequence_osc(WCHAR* input, int& idx, int max, UpdateStore& upp){
+bool
+Pty_::_process_sequence_osc(WCHAR* input, 
+                            int& idx, 
+                            int max, 
+                            UpdateStore& upp)
+{
     int opt = 0;
-    while(idx<max && '0'<=input[idx] && input[idx]<='9')
+    while (idx<max && '0'<=input[idx] && input[idx]<='9')
         opt = (opt*10) + input[idx++] - '0';
-    if(idx >= max)return false;
-    if(input[idx] != ';')return true;
+    if (idx >= max)
+        return false;
+    if (input[idx] != ';')return true;
     WCHAR arg [256];
-    if(! get_str_arg(arg, input, ++idx, max))
+    if (! get_str_arg(arg, input, ++idx, max))
         return false;
     //
-    switch(opt){
+    switch(opt) {
     case 0://xterm title and icon name
     case 2://xterm title
-        if(wcscmp(m_title, arg) != 0){
+        if (wcscmp(m_title, arg) != 0) {
             upp.mask = (UpdateMask)(upp.mask | UpdateMask_Title);
             SysFreeString(m_title);
             m_title = SysAllocString(arg);
         }
         break;
     case 50://xterm font, ck-custom "#ck0" ~ "#ck3"
-        if((arg[0]=='#') &&
+        if ((arg[0]=='#') &&
            (arg[1]=='C' || arg[1]=='c') &&
            (arg[2]=='K' || arg[2]=='k') &&
-           ('0'<=arg[3] && arg[3]<='9')){
+           ('0'<=arg[3] && arg[3]<='9')) {
             int n = 0;
-            for(int i=3; '0'<=arg[i] && arg[i]<='9'; i++)
+            for (int i=3; '0'<=arg[i] && arg[i]<='9'; i++)
                 n = (n * 10) + arg[i] - '0';
             upp.mask = (UpdateMask)(upp.mask | UpdateMask_Font);
             upp.font = n;
@@ -1391,23 +1397,23 @@ bool Pty_::_process_sequence_osc(WCHAR* input, int& idx, int max, UpdateStore& u
 }
 
 // \x1B P (...) \x07
-bool Pty_::_process_sequence_dcs(WCHAR* input, int& idx, int max, UpdateStore& upp){
+bool Pty_::_process_sequence_dcs(WCHAR* input, int& idx, int max, UpdateStore& upp) {
     WCHAR arg [256];
-    if(! get_str_arg(arg, input, idx, max))
+    if (! get_str_arg(arg, input, idx, max))
         return false;
     //
     return true;
 }
 
 // \x1B (...)
-bool Pty_::_process_sequence_esc(WCHAR* input, int& idx, int max, UpdateStore& upp){
-    if(idx >= max) return false;
-    switch(input[idx++]){
+bool Pty_::_process_sequence_esc(WCHAR* input, int& idx, int max, UpdateStore& upp) {
+    if (idx >= max) return false;
+    switch(input[idx++]) {
     case '#':
         break;
     case '('://charset0
-        if(idx >= max) return false;
-        switch(input[idx++]){
+        if (idx >= max) return false;
+        switch(input[idx++]) {
         case 'B':
         case 'J':m_jis_mode=0;break;
         case 'I':m_jis_mode=1;break;
@@ -1416,17 +1422,17 @@ bool Pty_::_process_sequence_esc(WCHAR* input, int& idx, int max, UpdateStore& u
     case ')'://charset1
     case '*'://charset2
     case '+'://charset3
-        if(idx >= max)return false;
+        if (idx >= max)return false;
         idx++;
         break;
     case '$'://charset -2 multi charset
-        if(idx >= max)return false;
-        switch(input[idx++]){
+        if (idx >= max)return false;
+        switch(input[idx++]) {
         case '@': m_jis_mode=1;break;
         case 'B': m_jis_mode=2;break;
         case '(':
-            if(idx >= max)return false;
-            switch(input[idx++]){
+            if (idx >= max)return false;
+            switch(input[idx++]) {
             case 'D'://sup?
             case 'O'://0213 map1?
             case 'P'://0213 map2?
@@ -1436,7 +1442,7 @@ bool Pty_::_process_sequence_esc(WCHAR* input, int& idx, int max, UpdateStore& u
         }
         break;
     case '@'://C1_40
-        if(idx >= max)return false;
+        if (idx >= max)return false;
         idx++;
         break;
     case '7'://save cursor
@@ -1459,8 +1465,8 @@ bool Pty_::_process_sequence_esc(WCHAR* input, int& idx, int max, UpdateStore& u
         m_screen.Current().Feed();
         break;
     case 'G'://ESA kidnapped escape sequence
-        if(idx >= max)return false;
-        switch(input[idx++]){
+        if (idx >= max)return false;
+        switch(input[idx++]) {
         case 'Q'://query graphics
             put_string("\x1BG0");//no graphics
             break;
@@ -1491,9 +1497,9 @@ bool Pty_::_process_sequence_esc(WCHAR* input, int& idx, int max, UpdateStore& u
 }
 
 //VT52 \x1B (...)
-bool Pty_::_process_sequence_vt52(WCHAR* input, int& idx, int max, UpdateStore& upp){
-    if(idx >= max) return false;
-    switch(input[idx++]){
+bool Pty_::_process_sequence_vt52(WCHAR* input, int& idx, int max, UpdateStore& upp) {
+    if (idx >= max) return false;
+    switch(input[idx++]) {
     case 'A':
         m_screen.Current().MoveCurY(-1);
         break;
@@ -1520,7 +1526,7 @@ bool Pty_::_process_sequence_vt52(WCHAR* input, int& idx, int max, UpdateStore& 
         m_screen.Current().EraseLine(0);
         break;
     case 'Y':
-        if(idx+2 >= max) return false;
+        if (idx+2 >= max) return false;
         m_screen.Current().SetCurY( input[idx++] - ' ' );
         m_screen.Current().SetCurX( input[idx++] - ' ' );
         break;
@@ -1539,13 +1545,13 @@ bool Pty_::_process_sequence_vt52(WCHAR* input, int& idx, int max, UpdateStore& 
     return true;
 }
 
-bool Pty_::_process_sequence(WCHAR* input, int& idx, int max, UpdateStore& upp){
-    if(idx >= max) return false;
+bool Pty_::_process_sequence(WCHAR* input, int& idx, int max, UpdateStore& upp) {
+    if (idx >= max) return false;
 
     WCHAR ch = input[idx++];
-    switch(ch){
+    switch(ch) {
     case '\x1B'://C0_ESC
-        if(_get_priv(Priv_VT52))
+        if (_get_priv(Priv_VT52))
             return _process_sequence_vt52(input, idx, max, upp);
         else
             return _process_sequence_esc(input, idx, max, upp);
@@ -1564,7 +1570,7 @@ bool Pty_::_process_sequence(WCHAR* input, int& idx, int max, UpdateStore& upp){
         m_screen.Current().Feed();
         break;
     case '\x07'://BEL
-        if(_get_priv(Priv_UseBell))
+        if (_get_priv(Priv_UseBell))
             MessageBeep(0);
         break;
     case '\x05'://ENQ
@@ -1595,20 +1601,20 @@ bool Pty_::_process_sequence(WCHAR* input, int& idx, int max, UpdateStore& upp){
     case '\x1F'://US
         break;
     default:
-        if(m_jis_mode==1 && '\x21' <= ch && ch <= '\x5F'){//kana
+        if (m_jis_mode==1 && '\x21' <= ch && ch <= '\x5F') {//kana
             ch += 0xff61 - 0x21;
         }
-        else if(m_jis_mode==2 && '\x21' <= ch && ch <= '\x7E'){//kanji
-            if(idx >= max) return false;
+        else if (m_jis_mode==2 && '\x21' <= ch && ch <= '\x7E') {//kanji
+            if (idx >= max) return false;
             WCHAR tmp = Enc::eucj_to_ucs( (ch<<8) | input[idx] | 0x8080 );
-            if(tmp){
+            if (tmp) {
                 ch = tmp;
                 idx++;
             }
         }
 
         bool (*isdbl)(WCHAR) = _get_priv(Priv_CjkWidth) ? Enc::is_dblchar_cjk : Enc::is_dblchar;
-        if(isdbl(ch))
+        if (isdbl(ch))
             m_screen.Current().AddCharMB(ch);
         else
             m_screen.Current().AddChar(ch);
@@ -1628,7 +1634,7 @@ protected:
     //
     void _finalize()
     {
-        if(m_obj) { 
+        if (m_obj) { 
             delete m_obj; 
             m_obj=0; 
         }
@@ -1751,7 +1757,7 @@ public:
     }
     STDMETHOD(_del_snapshot)(Snapshot* p)
     {
-        if(p) 
+        if (p) 
             delete [] (BYTE*)p; 
         return S_OK;
     }
@@ -1784,9 +1790,9 @@ public:
 }//namespace Ck
 
 
-extern "C" __declspec(dllexport) HRESULT CreatePty(Ck::IPtyNotify* cb, BSTR cmdline, Ck::IPty** pp){
-    if(!pp) return E_POINTER;
-    if(!cb) return E_INVALIDARG;
+extern "C" __declspec(dllexport) HRESULT CreatePty(Ck::IPtyNotify* cb, BSTR cmdline, Ck::IPty** pp) {
+    if (!pp) return E_POINTER;
+    if (!cb) return E_INVALIDARG;
 
     HRESULT hr;
     Ck::Pty* p = 0;
@@ -1796,13 +1802,13 @@ extern "C" __declspec(dllexport) HRESULT CreatePty(Ck::IPtyNotify* cb, BSTR cmdl
         p->AddRef();
         hr = S_OK;
     }
-    catch(HRESULT e){
+    catch(HRESULT e) {
         hr = e;
     }
-    catch(std::bad_alloc&){
+    catch(std::bad_alloc&) {
         hr = E_OUTOFMEMORY;
     }
-    catch(...){
+    catch(...) {
         hr = E_FAIL;
     }
     *pp = p;

@@ -236,7 +236,7 @@ var Align ={
   Far  :2
 };
 
-function CONFIG(){
+function CONFIG() {
   this.tty={
     execute_command  :"/bin/bash --login -i",
     title    :"ck",
@@ -301,7 +301,7 @@ function CONFIG(){
   };
 }
 CONFIG.prototype ={
-  copyTo_pty : function(pty){
+  copyTo_pty : function(pty) {
     var n = pty.PrivMode;
     n = (this.tty.scroll_key) ? (n | Priv.ScrlTtyKey) : (n & ~Priv.ScrlTtyKey);
     n = (this.tty.scroll_output) ? (n | Priv.ScrlTtyOut) : (n & ~Priv.ScrlTtyOut);
@@ -314,7 +314,7 @@ CONFIG.prototype ={
     pty.Savelines = this.tty.savelines;
     pty.Title = this.tty.title;
   },
-  copyFrom_pty : function(pty){
+  copyFrom_pty : function(pty) {
     var n = pty.PrivMode;
     this.tty.scroll_key = (n & Priv.ScrlTtyKey) ? 1 : 0;
     this.tty.scroll_output = (n & Priv.ScrlTtyKey) ? 1 : 0;
@@ -326,10 +326,10 @@ CONFIG.prototype ={
     this.tty.savelines = pty.Savelines;
     this.tty.workdir = pty.CurrentDirectory;
   },
-  copyTo_window : function(window){
-    for(var i=0; i <= 15; i++){
+  copyTo_window : function(window) {
+    for (var i=0; i <= 15; i++) {
       var v = this.window["color_color"+i];
-      if(v != null) window.Color(i) = v;
+      if (v != null) window.Color(i) = v;
     }
     window.Color(256) = this.window.color_foreground;
     window.Color(257) = this.window.color_background;
@@ -345,8 +345,8 @@ CONFIG.prototype ={
       (this.window.background_align_y  << 16) |
       (this.window.background_repeat_x << 8 ) |
       (this.window.background_align_x  << 0 );
-    if(this.window.background_file != null &&
-       this.window.background_file != ""){
+    if (this.window.background_file != null &&
+       this.window.background_file != "") {
       app.trace("[file] \"" + this.window.background_file + "\"\n");
       window.BackgroundImage = this.window.background_file;
     }
@@ -364,11 +364,11 @@ CONFIG.prototype ={
     window.MouseMBtn = this.window.mouse_middle;
     window.MouseRBtn = this.window.mouse_right;
     window.Resize(this.window.cols, this.window.rows);
-    if(this.window.position_x != null)
+    if (this.window.position_x != null)
       window.Move(this.window.position_x, this.window.position_y);
   },
-  copyFrom_window : function(window){
-    for(var i=0; i <= 15; i++)
+  copyFrom_window : function(window) {
+    for (var i=0; i <= 15; i++)
       this.window["color_color"+i] = window.Color(i);
     this.window.color_foreground = window.Color(256);
     this.window.color_background = window.Color(257);
@@ -401,68 +401,68 @@ CONFIG.prototype ={
     this.window.mouse_middle = window.MouseMBtn;
     this.window.mouse_right  = window.MouseRBtn;
   },
-  copyFrom_args : function(opt){
-    if(opt.fg != null) this.window.color_foreground = opt.fg;
-    if(opt.bg != null) this.window.color_background = opt.bg;
-    if(opt.cr != null) this.window.color_cursor = opt.cr;
-    if(opt.bgbmp != null) this.window.background_file = opt.bgbmp;
-    if(opt.fn != null) this.window.font_name = opt.fn;
-    if(opt.fs != null) this.window.font_size = opt.fs;
-    if(opt.lsp != null) this.window.linespace = opt.lsp;
-    if(opt.sb != null) this.window.scrollbar_show = opt.sb ? 1 : 0;
-    if(opt.posx != null) this.window.position_x = opt.posx;
-    if(opt.posy != null) this.window.position_y = opt.posy;
-    if(opt.cols != null) this.window.cols = opt.cols;
-    if(opt.rows != null) this.window.rows = opt.rows;
-    if(opt.si != null) this.tty.scroll_output = opt.si;
-    if(opt.sk != null) this.tty.scroll_key = opt.sk;
-    if(opt.sl != null) this.tty.savelines = opt.sl;
-    if(opt.bs != null) this.tty.bs_as_del = opt.bs;
-    if(opt.cjk != null)this.tty.cjk_width = opt.cjk;
-    if(opt.km != null) this.tty.input_encoding = opt.km;
-    if(opt.md != null) this.tty.display_encoding = opt.md;
-    if(opt.cmd != null)this.tty.execute_command = opt.cmd;
-    if(opt.title != null)this.tty.title = opt.title;
-    if(opt.workdir != null)this.tty.workdir = opt.workdir;
+  copyFrom_args : function(opt) {
+    if (opt.fg != null) this.window.color_foreground = opt.fg;
+    if (opt.bg != null) this.window.color_background = opt.bg;
+    if (opt.cr != null) this.window.color_cursor = opt.cr;
+    if (opt.bgbmp != null) this.window.background_file = opt.bgbmp;
+    if (opt.fn != null) this.window.font_name = opt.fn;
+    if (opt.fs != null) this.window.font_size = opt.fs;
+    if (opt.lsp != null) this.window.linespace = opt.lsp;
+    if (opt.sb != null) this.window.scrollbar_show = opt.sb ? 1 : 0;
+    if (opt.posx != null) this.window.position_x = opt.posx;
+    if (opt.posy != null) this.window.position_y = opt.posy;
+    if (opt.cols != null) this.window.cols = opt.cols;
+    if (opt.rows != null) this.window.rows = opt.rows;
+    if (opt.si != null) this.tty.scroll_output = opt.si;
+    if (opt.sk != null) this.tty.scroll_key = opt.sk;
+    if (opt.sl != null) this.tty.savelines = opt.sl;
+    if (opt.bs != null) this.tty.bs_as_del = opt.bs;
+    if (opt.cjk != null) this.tty.cjk_width = opt.cjk;
+    if (opt.km != null) this.tty.input_encoding = opt.km;
+    if (opt.md != null) this.tty.display_encoding = opt.md;
+    if (opt.cmd != null) this.tty.execute_command = opt.cmd;
+    if (opt.title != null) this.tty.title = opt.title;
+    if (opt.workdir != null) this.tty.workdir = opt.workdir;
   },
-  copyTo : function(dst){
-    for(pn in this.tty)      dst.tty[pn] = this.tty[pn];
-    for(pn in this.window)   dst.window[pn] = this.window[pn];
-    for(pn in this.accelkey) dst.accelkey[pn] = this.accelkey[pn];
+  copyTo : function(dst) {
+    for (pn in this.tty)      dst.tty[pn] = this.tty[pn];
+    for (pn in this.window)   dst.window[pn] = this.window[pn];
+    for (pn in this.accelkey) dst.accelkey[pn] = this.accelkey[pn];
   },
-  clone : function(){
+  clone : function() {
     var n = new CONFIG();
     this.copyTo(n);
     return n;
   }
 };
 
-function ARGS(args){
+function ARGS(args) {
   var nb = args.length;
-  for(var i=1; i < nb; i++){
+  for (var i=1; i < nb; i++) {
     var s = args[i];
-    if(s=="-share"){}
-    else if(s=="-fg")   { if(++i < nb) this.fg = parseInt(args[i], 16);}
-    else if(s=="-bg")   { if(++i < nb) this.bg = parseInt(args[i], 16);}
-    else if(s=="-cr")   { if(++i < nb) this.cr = parseInt(args[i], 16);}
-    else if(s=="-bgbmp"){ if(++i < nb) this.bgbmp = args[i];}
-    else if(s=="-fn")   { if(++i < nb) this.fn = args[i];}
-    else if(s=="-fs")   { if(++i < nb) this.fs = parseInt(args[i]);}
-    else if(s=="-lsp")  { if(++i < nb) this.lsp = parseInt(args[i]);}
-    else if(s=="-sl")   { if(++i < nb) this.sl = parseInt(args[i]);}
-    else if(s=="-si"  || s=="+si"){ this.si = (s.charAt(0)=='-') ? 1 : 0;}
-    else if(s=="-sk"  || s=="+sk"){ this.sk = (s.charAt(0)=='-') ? 1 : 0;}
-    else if(s=="-sb"  || s=="+sb"){ this.sb = (s.charAt(0)=='-') ? 1 : 0;}
-    else if(s=="-bs"  || s=="+bs"){ this.bs = (s.charAt(0)=='-') ? 1 : 0;}
-    else if(s=="-cjk" || s=="+cjk"){ this.cjk = (s.charAt(0)=='-') ? 1 : 0;}
-    else if(s=="-km")   { if(++i < nb) this.km = Helper.get_encoding(args[i]);}
-    else if(s=="-md")   { if(++i < nb) this.md = Helper.get_encoding(args[i]);}
-    else if(s=="-title"){ if(++i < nb) this.title = args[i];}
-    else if(s=="-f")    { if(++i < nb) this.script = args[i];}
-    else if(s=="-dir")  { if(++i < nb) this.workdir = args[i];}
-    else if(s=="-g"){
-      if(++i < nb){
-        if(args[i].match(/^(\d+)x(\d+)([\+\-])(\d+)([\+\-])(\d+)/)){
+    if (s=="-share") {}
+    else if (s=="-fg")   { if (++i < nb) this.fg = parseInt(args[i], 16); }
+    else if (s=="-bg")   { if (++i < nb) this.bg = parseInt(args[i], 16); }
+    else if (s=="-cr")   { if (++i < nb) this.cr = parseInt(args[i], 16); }
+    else if (s=="-bgbmp") { if (++i < nb) this.bgbmp = args[i]; }
+    else if (s=="-fn")   { if (++i < nb) this.fn = args[i]; }
+    else if (s=="-fs")   { if (++i < nb) this.fs = parseInt(args[i]); }
+    else if (s=="-lsp")  { if (++i < nb) this.lsp = parseInt(args[i]); }
+    else if (s=="-sl")   { if (++i < nb) this.sl = parseInt(args[i]); }
+    else if (s=="-si"  || s=="+si") { this.si = (s.charAt(0)=='-') ? 1 : 0; }
+    else if (s=="-sk"  || s=="+sk") { this.sk = (s.charAt(0)=='-') ? 1 : 0; }
+    else if (s=="-sb"  || s=="+sb") { this.sb = (s.charAt(0)=='-') ? 1 : 0; }
+    else if (s=="-bs"  || s=="+bs") { this.bs = (s.charAt(0)=='-') ? 1 : 0; }
+    else if (s=="-cjk" || s=="+cjk") { this.cjk = (s.charAt(0)=='-') ? 1 : 0; }
+    else if (s=="-km")   { if (++i < nb) this.km = Helper.get_encoding(args[i]); }
+    else if (s=="-md")   { if (++i < nb) this.md = Helper.get_encoding(args[i]); }
+    else if (s=="-title") { if (++i < nb) this.title = args[i]; }
+    else if (s=="-f")    { if (++i < nb) this.script = args[i]; }
+    else if (s=="-dir")  { if (++i < nb) this.workdir = args[i]; }
+    else if (s=="-g") {
+      if (++i < nb) {
+        if (args[i].match(/^(\d+)x(\d+)([\+\-])(\d+)([\+\-])(\d+)/)) {
           s = parseInt(RegExp.$4);
           this.posx = (RegExp.$3 == '-') ? -s-1 : s;
           s = parseInt(RegExp.$6);
@@ -470,40 +470,40 @@ function ARGS(args){
           this.cols = parseInt(RegExp.$1);
           this.rows = parseInt(RegExp.$2);
         }
-        else if(args[i].match(/^(\d+)x(\d+)/)){
+        else if (args[i].match(/^(\d+)x(\d+)/)) {
           this.cols = parseInt(RegExp.$1);
           this.rows = parseInt(RegExp.$2);
         }
       }
     }
-    else if(s=="-e"){
-      if(++i < nb){
+    else if (s=="-e") {
+      if (++i < nb) {
         this.cmd = "";
-        while(i<nb) this.cmd += "\"" + args[i++] + "\" ";
+        while (i<nb) this.cmd += "\"" + args[i++] + "\" ";
       }
     }
   }
 }
 
-function ACCEL(key,func,menu){
+function ACCEL(key,func,menu) {
   this.key = key;
   this.exec = func;
   this.menu = menu;
 }
 ACCEL.prototype ={
-  chkmod : function(k, mask){
+  chkmod : function(k, mask) {
     var b = this.key & mask;
-    if(b){
-      if(!(k & b))
+    if (b) {
+      if (!(k & b))
         return false;
-    }else{
-      if(k & mask)
+    } else {
+      if (k & mask)
         return false;
     }
     return true;
   },
-  match : function(k){
-    if((this.key & 0x00FFFFFF)==(k & 0x00FFFFFF) &&
+  match : function(k) {
+    if ((this.key & 0x00FFFFFF)==(k & 0x00FFFFFF) &&
        this.chkmod(k, Keys.Ctrl ) &&
        this.chkmod(k, Keys.Shift) &&
        this.chkmod(k, Keys.Alt  ))
@@ -513,24 +513,24 @@ ACCEL.prototype ={
 };
 
 
-function LIST(){
+function LIST() {
   this.array = [];
 }
 LIST.prototype ={
-  count : function(){
+  count : function() {
     return this.array.length;
   },
-  item : function(i){
+  item : function(i) {
     return this.array[i];
   },
-  add : function(p){
+  add : function(p) {
     this.array.push(p);
   },
-  remove : function(p){
+  remove : function(p) {
     var i=0, nb=this.array.length;
-    for(; i<nb; i++){
-      if(p == this.array[i]){
-        for(; i<nb-1; i++)
+    for (; i<nb; i++) {
+      if (p == this.array[i]) {
+        for (; i<nb-1; i++)
           this.array[i] = this.array[i+1];
         this.array.pop();
         p.Dispose();//
@@ -538,9 +538,9 @@ LIST.prototype ={
       }
     }
   },
-  clear : function(){
+  clear : function() {
     var i=0, nb=this.array.length;
-    for(; nb>0; nb--){
+    for (; nb>0; nb--) {
       this.array.pop().Dispose();//
     }
   }
@@ -558,91 +558,91 @@ var WndList = new LIST();
 
 var AccelKeys = [];
 
-AccelKeys.add = function(key, cmd, menu){
-  if(cmd != null && key != null && (key != Keys.None || menu != null))
+AccelKeys.add = function(key, cmd, menu) {
+  if (cmd != null && key != null && (key != Keys.None || menu != null))
     this.push(new ACCEL(key, cmd, menu));
 }
 
 //------------------
 
 var Helper ={
-  set_input_encoding : function(window, bit){
+  set_input_encoding : function(window, bit) {
     var p = window.Pty;
-    if(p) p.InputEncoding = bit;
+    if (p) p.InputEncoding = bit;
   },
-  toggle_display_encoding : function(window, bit){
+  toggle_display_encoding : function(window, bit) {
     var p = window.Pty;
-    if(p){
+    if (p) {
       var e = p.DisplayEncoding ^ bit;
-      if(e)
+      if (e)
         p.DisplayEncoding = e;
     }
   },
-  toggle_priv_mode : function(window, bit){
+  toggle_priv_mode : function(window, bit) {
     var p = window.Pty;
-    if(p) p.PrivMode = p.PrivMode ^ bit;
+    if (p) p.PrivMode = p.PrivMode ^ bit;
   },
-  scroll_absolute : function(window, n){
+  scroll_absolute : function(window, n) {
     var p = window.Pty;
-    if(p) p.ViewPos = n;
+    if (p) p.ViewPos = n;
   },
-  scroll_relative : function(window, page, line){
+  scroll_relative : function(window, page, line) {
     var p = window.Pty;
-    if(p){
+    if (p) {
       n = (p.ViewPos) + (p.PageHeight * page) + (line);
-      if(n<0) n=0;
+      if (n<0) n=0;
       p.ViewPos = n;
     }
   },
-  escape_path : function(path){
+  escape_path : function(path) {
     var checklist = " #$%&*()[]{};\"\\!`'<>?";
-    for(var i=0; i < checklist.length; i++){
+    for (var i=0; i < checklist.length; i++) {
       var c = checklist.charAt(i);
-      if(path.indexOf(c) >= 0){
+      if (path.indexOf(c) >= 0) {
         path = path.replace(/\"/g, "\\\"");
         return "\"" + path + "\"";
       }
     }
     return path;
   },
-  get_encoding : function(str){
+  get_encoding : function(str) {
     var ar = str.replace(/\s/, '').split(',');
     var n = 0;
-    for(var i=0; i < ar.length; i++){
-      if(ar[i]=="sjis" || ar[i]=="shiftjis") n |= Encoding.SJIS;
-      else if(ar[i]=="eucj" || ar[i]=="eucjp") n |= Encoding.EUCJP;
-      else if(ar[i]=="utf8" || ar[i]=="utf-8") n |= Encoding.UTF8;
+    for (var i=0; i < ar.length; i++) {
+      if (ar[i]=="sjis" || ar[i]=="shiftjis") n |= Encoding.SJIS;
+      else if (ar[i]=="eucj" || ar[i]=="eucjp") n |= Encoding.EUCJP;
+      else if (ar[i]=="utf8" || ar[i]=="utf-8") n |= Encoding.UTF8;
     }
     return (n != 0) ? n : null;
   },
-  get_active_window : function(){
+  get_active_window : function() {
     var active = app.ActiveWindow;
     var nbwnd = WndList.count();
-    for(var i=0; i < nbwnd; i++){
+    for (var i=0; i < nbwnd; i++) {
       var w = WndList.item(i);
-      if(w.Handle == active)
+      if (w.Handle == active)
         return w;
     }
     return null;
   },
-  create_shell : function(cfg){
-    if(cfg.tty.workdir != null)
+  create_shell : function(cfg) {
+    if (cfg.tty.workdir != null)
       app.CurrentDirectory = cfg.tty.workdir;
 
     var n = app.NewPty( cfg.tty.execute_command );
     PtyList.add(n);
 
-    if(cfg.tty.workdir != null)
+    if (cfg.tty.workdir != null)
       app.CurrentDirectory = HomeDir;
 
     cfg.copyTo_pty(n);
 
-    for(var i=0; i < WndList.count(); i++){
+    for (var i=0; i < WndList.count(); i++) {
       Events.wnd_on_title_init(WndList.item(i));
     }
     return n;
   },
-  create_window : function(cfg){
+  create_window : function(cfg) {
     var n = app.NewWnd();
     WndList.add(n);
 
@@ -652,13 +652,13 @@ var Helper ={
 };
 
 var Commands ={
-  wnd_next_shell : function(window){
+  wnd_next_shell : function(window) {
     var nbpty = PtyList.count();
-    if(nbpty>1){
+    if (nbpty>1) {
       var pty = window.Pty;
-      for(var i=0; i < nbpty; i++){
-        if(PtyList.item(i) == pty){
-          if(++i >= nbpty) i=0;
+      for (var i=0; i < nbpty; i++) {
+        if (PtyList.item(i) == pty) {
+          if (++i >= nbpty) i=0;
           window.Pty = PtyList.item(i);
           break;
         }
@@ -666,13 +666,13 @@ var Commands ={
     }
     return true;
   },
-  wnd_prev_shell : function(window){
+  wnd_prev_shell : function(window) {
     var nbpty = PtyList.count();
-    if(nbpty>1){
+    if (nbpty>1) {
       var pty = window.Pty;
-      for(var i=0; i < nbpty; i++){
-        if(PtyList.item(i) == pty){
-          if(--i < 0) i=nbpty-1;
+      for (var i=0; i < nbpty; i++) {
+        if (PtyList.item(i) == pty) {
+          if (--i < 0) i=nbpty-1;
           window.Pty = PtyList.item(i);
           break;
         }
@@ -680,22 +680,22 @@ var Commands ={
     }
     return true;
   },
-  wnd_new_shell : function(window){
+  wnd_new_shell : function(window) {
     var cfg = Config.clone();
-    if(window != null){
+    if (window != null) {
       var pty = window.Pty;
-      if(pty != null){
+      if (pty != null) {
         cfg.copyFrom_pty(pty);
       }
     }
     window.Pty = Helper.create_shell(cfg);
     return true;
   },
-  wnd_new_window : function(window){
+  wnd_new_window : function(window) {
     var cfg = Config.clone();
-    if(window != null){
+    if (window != null) {
       var pty = window.Pty;
-      if(pty != null){
+      if (pty != null) {
         cfg.copyFrom_pty(pty);
       }
     }
@@ -706,7 +706,7 @@ var Commands ={
     w.Show();
     return true;
   },
-  wnd_open_window : function(window){
+  wnd_open_window : function(window) {
     var cfg = Config.clone();
     cfg.copyFrom_window(window);
     var w = Helper.create_window(cfg);
@@ -714,11 +714,11 @@ var Commands ={
     w.Show();
     return true;
   },
-  wnd_close_window : function(window){
+  wnd_close_window : function(window) {
     window.Close();
     return true;
   },
-  tty_paste : function(window){
+  tty_paste : function(window) {
     var pty, message;
 
 	pty = window.Pty;
@@ -733,62 +733,62 @@ var Commands ={
     pty.PutString(message);
     return true;
   },
-  tty_reset : function(window){
+  tty_reset : function(window) {
     var p = window.Pty;
-    if(p){
+    if (p) {
       p.Reset(true);
       window.UpdateScreen();
     }
     return true;
   },
-  tty_scroll_page_up : function(window)    { Helper.scroll_relative(window, -1, 0); return true;},
-  tty_scroll_page_down : function(window)    { Helper.scroll_relative(window, +1, 0); return true;},
-  tty_scroll_line_up : function(window)    { Helper.scroll_relative(window, 0, -3); return true;},
-  tty_scroll_line_down : function(window)    { Helper.scroll_relative(window, 0, +3); return true;},
-  tty_scroll_top : function(window)    { Helper.scroll_absolute(window, 0); return true;},
-  tty_scroll_bottom : function(window)    { Helper.scroll_absolute(window, -1); return true;},
-  tty_enc_set_input_sjis : function(window)  { Helper.set_input_encoding(window, Encoding.SJIS); return true;},
-  tty_enc_set_input_eucj : function(window)  { Helper.set_input_encoding(window, Encoding.EUCJP); return true;},
-  tty_enc_set_input_utf8 : function(window)  { Helper.set_input_encoding(window, Encoding.UTF8); return true;},
-  tty_enc_toggle_display_sjis : function(window)  { Helper.toggle_display_encoding(window, Encoding.SJIS); return true;},
-  tty_enc_toggle_display_eucj : function(window)  { Helper.toggle_display_encoding(window, Encoding.EUCJP); return true;},
-  tty_enc_toggle_display_utf8 : function(window)  { Helper.toggle_display_encoding(window, Encoding.UTF8); return true;},
-  tty_toggle_scroll_key : function(window)  { Helper.toggle_priv_mode(window, Priv.ScrlTtyKey); return true;},
-  tty_toggle_scroll_out : function(window)  { Helper.toggle_priv_mode(window, Priv.ScrlTtyOut); return true;},
-  tty_toggle_bs_as_del : function(window)    { Helper.toggle_priv_mode(window, Priv.Backspace); return true;},
-  tty_toggle_cjk_width : function(window)    { Helper.toggle_priv_mode(window, Priv.CjkWidth); return true;},
-  wnd_menu : function(window)      { window.PopupMenu(false); return true;},
-  wnd_sys_menu : function(window)      { window.PopupMenu(true); return true;},
-  wnd_change_transp : function(window)    { window.Transp = (window.Transp+1)&3; return true;},
-  wnd_toggle_scrollbar : function(window)    { window.Scrollbar = window.Scrollbar ^ 1; return true;},
-  wnd_set_zorder_normal : function(window)  { window.ZOrder = WinZOrder.Normal; return true;},
-  wnd_set_zorder_top : function(window)    { window.ZOrder = WinZOrder.Top;    return true;},
-  wnd_set_zorder_bottom : function(window)  { window.ZOrder = WinZOrder.Bottom; return true;},
-  wnd_inc_fontsize : function(window)    { window.FontSize+=2; return true;},
-  wnd_dec_fontsize : function(window)    { window.FontSize-=2; return true;},
-  app_toggle_console : function(window)    { app.ShowConsole = app.ShowConsole ? false : true; return true;}
+  tty_scroll_page_up : function(window)    { Helper.scroll_relative(window, -1, 0); return true; },
+  tty_scroll_page_down : function(window)    { Helper.scroll_relative(window, +1, 0); return true; },
+  tty_scroll_line_up : function(window)    { Helper.scroll_relative(window, 0, -3); return true; },
+  tty_scroll_line_down : function(window)    { Helper.scroll_relative(window, 0, +3); return true; },
+  tty_scroll_top : function(window)    { Helper.scroll_absolute(window, 0); return true; },
+  tty_scroll_bottom : function(window)    { Helper.scroll_absolute(window, -1); return true; },
+  tty_enc_set_input_sjis : function(window)  { Helper.set_input_encoding(window, Encoding.SJIS); return true; },
+  tty_enc_set_input_eucj : function(window)  { Helper.set_input_encoding(window, Encoding.EUCJP); return true; },
+  tty_enc_set_input_utf8 : function(window)  { Helper.set_input_encoding(window, Encoding.UTF8); return true; },
+  tty_enc_toggle_display_sjis : function(window)  { Helper.toggle_display_encoding(window, Encoding.SJIS); return true; },
+  tty_enc_toggle_display_eucj : function(window)  { Helper.toggle_display_encoding(window, Encoding.EUCJP); return true; },
+  tty_enc_toggle_display_utf8 : function(window)  { Helper.toggle_display_encoding(window, Encoding.UTF8); return true; },
+  tty_toggle_scroll_key : function(window)  { Helper.toggle_priv_mode(window, Priv.ScrlTtyKey); return true; },
+  tty_toggle_scroll_out : function(window)  { Helper.toggle_priv_mode(window, Priv.ScrlTtyOut); return true; },
+  tty_toggle_bs_as_del : function(window)    { Helper.toggle_priv_mode(window, Priv.Backspace); return true; },
+  tty_toggle_cjk_width : function(window)    { Helper.toggle_priv_mode(window, Priv.CjkWidth); return true; },
+  wnd_menu : function(window)      { window.PopupMenu(false); return true; },
+  wnd_sys_menu : function(window)      { window.PopupMenu(true); return true; },
+  wnd_change_transp : function(window)    { window.Transp = (window.Transp+1)&3; return true; },
+  wnd_toggle_scrollbar : function(window)    { window.Scrollbar = window.Scrollbar ^ 1; return true; },
+  wnd_set_zorder_normal : function(window)  { window.ZOrder = WinZOrder.Normal; return true; },
+  wnd_set_zorder_top : function(window)    { window.ZOrder = WinZOrder.Top;    return true; },
+  wnd_set_zorder_bottom : function(window)  { window.ZOrder = WinZOrder.Bottom; return true; },
+  wnd_inc_fontsize : function(window)    { window.FontSize+=2; return true; },
+  wnd_dec_fontsize : function(window)    { window.FontSize-=2; return true; },
+  app_toggle_console : function(window)    { app.ShowConsole = app.ShowConsole ? false : true; return true; }
 };
 
 
 var Events = new Object();
 Events.base ={
-  wnd_on_closed : function(window){
+  wnd_on_closed : function(window) {
     WndList.remove(window);
-    if(WndList.count() == 0){
+    if (WndList.count() == 0) {
       WndList.clear();
       PtyList.clear();
       app.Quit();
     }
   },
-  wnd_on_key_down : function(window, key){
-    for(var i=0; i < AccelKeys.length; i++){
-      if(AccelKeys[i].match(key) && AccelKeys[i].exec(window))
+  wnd_on_key_down : function(window, key) {
+    for (var i=0; i < AccelKeys.length; i++) {
+      if (AccelKeys[i].match(key) && AccelKeys[i].exec(window))
         return;
     }
     var p = window.Pty;
-    if(p) p.PutKeyboard(key);
+    if (p) p.PutKeyboard(key);
   },
-  wnd_on_mouse_down : function(window, button, x, y, modifier){
+  wnd_on_mouse_down : function(window, button, x, y, modifier) {
     var pty = window.Pty;
     if (pty) {
       var priv = pty.PrivMode;
@@ -837,7 +837,7 @@ Events.base ={
     }
     return false;
   },
-  wnd_on_mouse_up : function(window, button, x, y, modifier){
+  wnd_on_mouse_up : function(window, button, x, y, modifier) {
     var pty = window.Pty;
     if (pty) {
       var priv = pty.PrivMode;
@@ -887,7 +887,7 @@ Events.base ={
     }
     return false;
   },
-  wnd_on_mouse_move : function(window, button, x, y, modifier){
+  wnd_on_mouse_move : function(window, button, x, y, modifier) {
      var pty = window.Pty;
     if (pty) {
       var priv = pty.PrivMode;
@@ -904,7 +904,7 @@ Events.base ={
       }
       var protocol = priv & Priv.MouseProtocolMask;
       var messsage;
-      if (this._x === x && this._y === y){
+      if (this._x === x && this._y === y) {
         return true;
       }
       this._x = x;
@@ -944,16 +944,16 @@ Events.base ={
     }
     return false;
   },
-  wnd_on_mouse_wheel : function(window, x, y, key, delta){
+  wnd_on_mouse_wheel : function(window, x, y, key, delta) {
      var pty = window.Pty;
     if (pty) {
       var priv = pty.PrivMode;
       var mode = priv & Priv.MouseModeMask;
       if (mode === Priv.MouseMode_None) {
-         if(key & Keys.Ctrl){
+         if (key & Keys.Ctrl) {
           window.FontSize -= (delta * 2);
         }
-        else{
+        else {
           delta = (key & Keys.Alt) ? (delta*1) : (delta*5);
           if (priv & Priv.AplKP) {
             // for less(1)
@@ -1011,28 +1011,28 @@ Events.base ={
       }
     }
   },
-  wnd_on_menu_init : function(window){
+  wnd_on_menu_init : function(window) {
     var pty = window.Pty;
     {//category 0xA00
       var count=0;
       var nb = AccelKeys.length;
-      for(var i=0; i < nb; i++){
-        if(AccelKeys[i].menu){
+      for (var i=0; i < nb; i++) {
+        if (AccelKeys[i].menu) {
           app.AddMenu(0xA00+i, AccelKeys[i].menu, false);
           count++;
         }
       }
-      if(count>0){
+      if (count>0) {
         app.AddMenuSeparator();
       }
     }
     {//category 0xB00
       var nb = PtyList.count();
-      for(var i=0; i<nb; i++){
+      for (var i=0; i<nb; i++) {
         var p = PtyList.item(i);
         app.AddMenu(0xB00+i, (i+1)+" "+p.Title, (p==pty));
       }
-      if(nb>0){
+      if (nb>0) {
         app.AddMenuSeparator();
       }
     }
@@ -1042,7 +1042,7 @@ Events.base ={
       var priv = 0;
       var transp = window.Transp;
       var zorder = window.ZOrder;
-      if(pty){
+      if (pty) {
         ienc = pty.InputEncoding;
         denc = pty.DisplayEncoding;
         priv = pty.PrivMode;
@@ -1060,7 +1060,7 @@ Events.base ={
       app.AddMenu(0xC00+23, "&Tty: CJK Width",       priv & Priv.CjkWidth);
       app.AddMenu(0xC00+24, "&Tty: Reset", false);
       app.AddMenuSeparator();
-      if(app.IsDesktopComposition)
+      if (app.IsDesktopComposition)
         app.AddMenu(0xC00+40, "&Win: Change Transp Mode", false);
       app.AddMenu(0xC00+41, "&Win: Scrollbar",     window.Scrollbar & 1);
       app.AddMenu(0xC00+42, "&Win: ZOrder Normal", zorder==WinZOrder.Normal);
@@ -1072,17 +1072,17 @@ Events.base ={
       app.AddMenu(0xC00+60, "Show Console", app.ShowConsole);
     }
   },
-  wnd_on_menu_execute : function(window, id){
+  wnd_on_menu_execute : function(window, id) {
     var category = id & 0xF00;
     var index    = id & 0x0FF;
-    if(category == 0xA00){
+    if (category == 0xA00) {
       AccelKeys[index].exec(window);
     }
-    else if(category == 0xB00){
+    else if (category == 0xB00) {
       window.Pty = PtyList.item(index);
     }
-    else if(category == 0xC00){
-      switch(index){
+    else if (category == 0xC00) {
+      switch(index) {
       case 0:  Commands.tty_enc_set_input_sjis(window);break;
       case 1:  Commands.tty_enc_set_input_eucj(window);break;
       case 2:  Commands.tty_enc_set_input_utf8(window);break;
@@ -1105,49 +1105,49 @@ Events.base ={
       }
     }
   },
-  wnd_on_title_init : function(window){
+  wnd_on_title_init : function(window) {
     var pty = window.Pty;
     var title = (pty) ? pty.Title : "(null)";
     var nbpty = PtyList.count();
-    if(nbpty > 1){
+    if (nbpty > 1) {
       var i = 0;
-      for(; i<nbpty; i++){
-        if(PtyList.item(i) == pty)
+      for (; i<nbpty; i++) {
+        if (PtyList.item(i) == pty)
           break;
       }
       title = "[" + (i+1) + "/" + (nbpty) + "] " + title;
     }
     window.Title = title;
   },
-  wnd_on_drop : function(window, path, type, key){
+  wnd_on_drop : function(window, path, type, key) {
     var pty = window.Pty;
-    if(pty){
-      if(type==1){//file path
-        if(key & 0x02){//MK_RBUTTON
+    if (pty) {
+      if (type==1) {//file path
+        if (key & 0x02) {//MK_RBUTTON
           path = app.ToCygwinPath(path);
         }
         path = Helper.escape_path(path) + " ";
       }
-      else{//simple text
+      else {//simple text
       }
       pty.PutString(path);
     }
   },
-  pty_on_closed : function(pty){
+  pty_on_closed : function(pty) {
     var nbwnd = WndList.count();
-    for(var i=0; i < nbwnd; i++){
+    for (var i=0; i < nbwnd; i++) {
       var w = WndList.item(i);
-      if(w.Pty == pty)
+      if (w.Pty == pty)
         w.Pty = null;
     }
     //
     PtyList.remove(pty);
     //
     var nbpty = PtyList.count();
-    for(var i=nbwnd-1; i >= 0; i--){
+    for (var i=nbwnd-1; i >= 0; i--) {
       var w = WndList.item(i);
-      if(w.Pty == null){
-        if(nbwnd > 1 || nbpty < 1){
+      if (w.Pty == null) {
+        if (nbwnd > 1 || nbpty < 1) {
           w.Close();
           nbwnd--;
           continue;
@@ -1157,42 +1157,43 @@ Events.base ={
       Events.wnd_on_title_init(w);
     }
   },
-  pty_on_update_screen : function(pty){
+  pty_on_update_screen : function(pty) {
     var nbwnd = WndList.count();
-    for(var i=0; i < nbwnd; i++){
+    for (var i=0; i < nbwnd; i++) {
       var w = WndList.item(i);
-      if(w.Pty == pty)
+      if (w.Pty == pty)
         w.UpdateScreen();
     }
   },
-  pty_on_update_title : function(pty){
+  pty_on_update_title : function(pty) {
     var nbwnd = WndList.count();
-    for(var i=0; i < nbwnd; i++){
+    for (var i=0; i < nbwnd; i++) {
       var w = WndList.item(i);
-      if(w.Pty == pty)
+      if (w.Pty == pty) {
         Events.wnd_on_title_init(w);
+      }
     }
   },
-  pty_on_req_font : function(pty, id){
+  pty_on_req_font : function(pty, id) {
     app.trace("pty_on_req_font " + id + "\n");
   },
-  pty_on_req_move : function(pty, x, y){
+  pty_on_req_move : function(pty, x, y) {
     var nbwnd = WndList.count();
-    for(var i=0; i < nbwnd; i++){
+    for (var i=0; i < nbwnd; i++) {
       var w = WndList.item(i);
-      if(w.Pty == pty)
+      if (w.Pty == pty)
         w.Move(x,y);
     }
   },
-  pty_on_req_resize : function(pty, x, y){
+  pty_on_req_resize : function(pty, x, y) {
     var nbwnd = WndList.count();
-    for(var i=0; i < nbwnd; i++){
+    for (var i=0; i < nbwnd; i++) {
       var w = WndList.item(i);
-      if(w.Pty == pty)
+      if (w.Pty == pty)
         w.Resize(x,y);
     }
   },
-  app_on_new_command : function(_args, _workdir){
+  app_on_new_command : function(_args, _workdir) {
     var opt = new ARGS(new VBArray(_args).toArray());
     var cfg = Config.clone();
     cfg.tty.workdir = _workdir;
@@ -1201,13 +1202,13 @@ Events.base ={
     var p = Helper.create_shell(cfg);
 
     //var act = Helper.get_active_window();
-    //if(act != null){ act.Pty = p; return;}
+    //if (act != null) { act.Pty = p; return; }
 
     var w = Helper.create_window(cfg);
     w.Pty = p;
     w.Show();
   },
-  app_on_startup : function(_args){
+  app_on_startup : function(_args) {
     {//env
       var ar = [];
       ar.push("/usr/local/bin");
@@ -1216,10 +1217,10 @@ Events.base ={
       ar.push("/usr/X11R6/bin");
       //uniq
       var old = app.Env("PATH").split(":");
-      for(var i=0; i < old.length; i++){
+      for (var i=0; i < old.length; i++) {
         var k=0, op=old[i];
-        for(; k < ar.length && ar[k] != op; k++);
-        if(k >= ar.length) ar.push(op);
+        for (; k < ar.length && ar[k] != op; k++);
+        if (k >= ar.length) ar.push(op);
       }
       //set
       app.Env("PATH") = ar.join(":");

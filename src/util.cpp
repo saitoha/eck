@@ -27,13 +27,13 @@ namespace cygwin{
     }
 }
 
-namespace Ck{
+namespace Ck {
 namespace Util{
 
-BOOL show_window(HWND hwnd, int cmd){
+BOOL show_window(HWND hwnd, int cmd) {
     static bool first = true;
-    if(hwnd){
-        if(first){
+    if (hwnd) {
+        if (first) {
             first = false;
             ::ShowWindow(hwnd, SW_HIDE);//skip StartupInfo.wShowWindow
         }
@@ -44,11 +44,11 @@ BOOL show_window(HWND hwnd, int cmd){
     return FALSE;
 }
 
-static BYTE* get_resource(HMODULE module, LPCWSTR type, LPCWSTR name, DWORD* outsize){
+static BYTE* get_resource(HMODULE module, LPCWSTR type, LPCWSTR name, DWORD* outsize) {
     HRSRC rsrc = FindResource(module, name, type);
-    if(rsrc){
+    if (rsrc) {
         HGLOBAL glb  = LoadResource(module, rsrc);
-        if(glb){
+        if (glb) {
             *outsize = SizeofResource(module, rsrc);
             return (BYTE*) LockResource(glb);
         }
@@ -57,26 +57,26 @@ static BYTE* get_resource(HMODULE module, LPCWSTR type, LPCWSTR name, DWORD* out
     return 0;
 }
 
-static void _get_module_date(HMODULE module, SYSTEMTIME* p){
+static void _get_module_date(HMODULE module, SYSTEMTIME* p) {
     FILETIME   bt = {0xD53E8000, 0x019DB1DE};//1970/01/01
     _int64     ft;
     FileTimeToLocalFileTime(&bt, (FILETIME*)&ft);//timezone
 
     IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*) module;
     IMAGE_NT_HEADERS* nt = (IMAGE_NT_HEADERS*) ((BYTE*)dos + dos->e_lfanew);
-    if(dos->e_magic == IMAGE_DOS_SIGNATURE && nt->Signature == IMAGE_NT_SIGNATURE){
+    if (dos->e_magic == IMAGE_DOS_SIGNATURE && nt->Signature == IMAGE_NT_SIGNATURE) {
         ft += (_int64) nt->FileHeader.TimeDateStamp * 10000000;
     }
     FileTimeToSystemTime((FILETIME*)&ft, p);
 }
 
-static void _get_module_version(HMODULE module, WORD* p){
+static void _get_module_version(HMODULE module, WORD* p) {
     p[0]=p[1]=p[2]=p[3]=0;
     DWORD size;
     BYTE* rsrc = get_resource(module, RT_VERSION, MAKEINTRESOURCE(1), &size);
-    if(rsrc && size > 54){
+    if (rsrc && size > 54) {
         WORD* w = (WORD*)(rsrc+40);
-        if(w[0]==0x04BD && w[1]==0xFEEF){//0xFEEF04BD
+        if (w[0]==0x04BD && w[1]==0xFEEF) {//0xFEEF04BD
             p[0]=w[5];
             p[1]=w[4];
             p[2]=w[7];
@@ -85,9 +85,9 @@ static void _get_module_version(HMODULE module, WORD* p){
     }
 }
 
-BSTR get_module_version(HMODULE module, BOOL full){
+BSTR get_module_version(HMODULE module, BOOL full) {
     BSTR bs = SysAllocStringLen(0,64);
-    if(bs){
+    if (bs) {
         SYSTEMTIME st;
         WORD vs[4];
         _get_module_version(module, vs);
@@ -103,53 +103,53 @@ BSTR get_module_version(HMODULE module, BOOL full){
 
 
 
-static LPWSTR _conv_encoding(BYTE* ptr, DWORD size){
+static LPWSTR _conv_encoding(BYTE* ptr, DWORD size) {
     LPWSTR result;
 
-    if(ptr[0]==0xFF && ptr[1]==0xFE){//ucs2le
+    if (ptr[0]==0xFF && ptr[1]==0xFE) {//ucs2le
         size >>= 1;
         result = new WCHAR[size+4];
         memcpy(result, ptr, size<<1);
     }
-    else if(ptr[0]==0xFE && ptr[1]==0xFF){//ucs2be
+    else if (ptr[0]==0xFE && ptr[1]==0xFF) {//ucs2be
         size >>= 1;
         result = new WCHAR[size+4];
-        for(DWORD i=0; i<size; i++, ptr+=2)
+        for (DWORD i=0; i<size; i++, ptr+=2)
             result[i] = (ptr[0]<<8) | (ptr[1]);
     }
-    else if(ptr[0]==0xEF && ptr[1]==0xBB && ptr[2]==0xBF){//utf8
+    else if (ptr[0]==0xEF && ptr[1]==0xBB && ptr[2]==0xBF) {//utf8
         result = new WCHAR[size+4];
         size = MultiByteToWideChar(CP_UTF8,0, (LPCSTR)ptr,size, result,size);
     }
-    else{//ansi code page
+    else {//ansi code page
         result = new WCHAR[size+4];
         size = MultiByteToWideChar(CP_ACP,0, (LPCSTR)ptr,size, result,size);
     }
 
-    if(size<1){
+    if (size<1) {
         delete [] result;
         return 0;
     }
     result[size] = '\0';
     return result;
 }
-LPWSTR load_script_rsrc(LPCWSTR name){
+LPWSTR load_script_rsrc(LPCWSTR name) {
     LPWSTR result = 0;
     DWORD  size = 0;
     BYTE*  ptr = get_resource(g_this_module, L"SCRIPT", name, &size);
-    if(ptr && 4 <= size && size <= 0x1fffffff){
+    if (ptr && 4 <= size && size <= 0x1fffffff) {
         result = _conv_encoding(ptr,size);
     }
     return result;
 }
-LPWSTR load_script_file(LPCWSTR path){
+LPWSTR load_script_file(LPCWSTR path) {
     LPWSTR result = 0;
     HANDLE fd = CreateFile(path, GENERIC_READ,FILE_SHARE_READ,0,OPEN_EXISTING,FILE_FLAG_SEQUENTIAL_SCAN,0);
-    if(fd != INVALID_HANDLE_VALUE){
+    if (fd != INVALID_HANDLE_VALUE) {
         DWORD dw, size = GetFileSize(fd, &dw);
-        if(dw==0 && 4<=size && size<=0x1fffffff){
+        if (dw==0 && 4<=size && size<=0x1fffffff) {
             BYTE* ptr = new BYTE[size];
-            if(ReadFile(fd,ptr,size,&dw,0) && dw==size){
+            if (ReadFile(fd,ptr,size,&dw,0) && dw==size) {
                 result = _conv_encoding(ptr,size);
             }
             delete [] ptr;
@@ -160,29 +160,29 @@ LPWSTR load_script_file(LPCWSTR path){
 }
 
 
-static bool open_clipboard(){
+static bool open_clipboard() {
     int count = 6;
     do{
-        if(OpenClipboard(0))
+        if (OpenClipboard(0))
             return true;
         Sleep(16);
-    } while(--count);
+    } while (--count);
     return false;
 }
 
-void set_clipboard_text(BSTR str){
+void set_clipboard_text(BSTR str) {
     UINT len = SysStringLen(str)+1;
-    if(len<=1) return;
+    if (len<=1) return;
     HANDLE mem = GlobalAlloc(GMEM_MOVEABLE, sizeof(WCHAR)*len);
-    if(mem){
+    if (mem) {
         void* ptr = GlobalLock(mem);
-        if(ptr){
+        if (ptr) {
             memcpy(ptr, str, sizeof(WCHAR)*len);
             GlobalUnlock(mem);
             //
-            if(open_clipboard()){
-                if(EmptyClipboard()){
-                    if(SetClipboardData(CF_UNICODETEXT, mem)){
+            if (open_clipboard()) {
+                if (EmptyClipboard()) {
+                    if (SetClipboardData(CF_UNICODETEXT, mem)) {
                         CloseClipboard();
                         return;
                     }
@@ -194,23 +194,23 @@ void set_clipboard_text(BSTR str){
     }
 }
 
-BSTR get_clipboard_text(){
+BSTR get_clipboard_text() {
     BSTR result = 0;
-    if(IsClipboardFormatAvailable(CF_UNICODETEXT)){
-        if(open_clipboard()){
+    if (IsClipboardFormatAvailable(CF_UNICODETEXT)) {
+        if (open_clipboard()) {
             HANDLE mem = GetClipboardData(CF_UNICODETEXT);
-            if(mem){
+            if (mem) {
                 WCHAR* src = (WCHAR*) GlobalLock(mem);
-                if(src){
+                if (src) {
                     int len = (int)( GlobalSize(mem)/sizeof(WCHAR)-1 );
-                    if(len > 0){
+                    if (len > 0) {
                         result = SysAllocStringLen(0,len+1);
-                        if(result){
+                        if (result) {
                             int di=0;
-                            for(int si=0; si<len && src[si]; si++){
-                                if(src[si] == '\r')
+                            for (int si=0; si<len && src[si]; si++) {
+                                if (src[si] == '\r')
                                     ;
-                                else if(src[si] == '\n')
+                                else if (src[si] == '\n')
                                     result[di++]='\r';
                                 else
                                     result[di++]=src[si];
@@ -230,17 +230,17 @@ BSTR get_clipboard_text(){
 
 
 
-static char* bstr_to_char(BSTR name){
+static char* bstr_to_char(BSTR name) {
     char* result = 0;
     int wlen = (int) SysStringLen(name);
-    if(wlen>0){
+    if (wlen>0) {
         int alen = wlen * 3 + 32;
         result = new char[alen];
         alen = WideCharToMultiByte(CP_UTF8,0, name,wlen, result,alen-1, 0,0);
-        if(alen>0){
+        if (alen>0) {
             result[alen]='\0';
         }
-        else{
+        else {
             delete [] result;
             result=0;
         }
@@ -248,18 +248,18 @@ static char* bstr_to_char(BSTR name){
     return result;
 }
 
-static BSTR char_to_bstr(char* str){
+static BSTR char_to_bstr(char* str) {
     BSTR result = 0;
     int alen = (int) strlen(str);
-    if(alen>0){
+    if (alen>0) {
         int wlen = alen+32;
         result = SysAllocStringLen(0, wlen);
         wlen = MultiByteToWideChar(CP_UTF8,0, str,alen, result,wlen);
-        if(wlen>0){
+        if (wlen>0) {
             result[wlen]='\0';
             ((UINT*)result)[-1] = wlen * sizeof(WCHAR);
         }
-        else{
+        else {
             SysFreeString(result);
             result=0;
         }
@@ -267,22 +267,22 @@ static BSTR char_to_bstr(char* str){
     return result;
 }
 
-void set_cygwin_env(BSTR name, BSTR value){
+void set_cygwin_env(BSTR name, BSTR value) {
     char* aname  = bstr_to_char(name);
     char* avalue = bstr_to_char(value);
-    if(aname){
+    if (aname) {
         cyg_setenv(aname, avalue ? avalue : "", 1);
     }
-    if(aname) delete [] aname;
-    if(avalue) delete [] avalue;
+    if (aname) delete [] aname;
+    if (avalue) delete [] avalue;
 }
 
-BSTR get_cygwin_env(BSTR name){
+BSTR get_cygwin_env(BSTR name) {
     BSTR result = 0;
     char* aname  = bstr_to_char(name);
-    if(aname){
+    if (aname) {
         char* avalue = cyg_getenv(aname);
-        if(avalue){
+        if (avalue) {
             result = char_to_bstr(avalue);
         }
         delete [] aname;
@@ -290,28 +290,28 @@ BSTR get_cygwin_env(BSTR name){
     return result;
 }
 
-BSTR get_cygwin_current_directory(){
+BSTR get_cygwin_current_directory() {
     BSTR result=0;
     char buf [MAX_PATH+32];
-    if(cyg_getcwd(buf, MAX_PATH+32)){
+    if (cyg_getcwd(buf, MAX_PATH+32)) {
         buf[MAX_PATH+31] = '\0';
         result = char_to_bstr(buf);
     }
     return result;
 }
 
-void set_cygwin_current_directory(BSTR cygpath){
+void set_cygwin_current_directory(BSTR cygpath) {
     char* apath = bstr_to_char(cygpath);
-    if(apath){
+    if (apath) {
         cygwin::chdir(apath);
         delete [] apath;
     }
 }
 
-BSTR to_cygwin_path(BSTR src){
+BSTR to_cygwin_path(BSTR src) {
     BSTR result = 0;
     char* asrc = bstr_to_char(src);
-    if(asrc){
+    if (asrc) {
         char tmp [MAX_PATH+32];
         tmp[0]='\0';
         cygwin::cygwin_conv_to_posix_path(asrc, tmp);
@@ -322,10 +322,10 @@ BSTR to_cygwin_path(BSTR src){
     return result;
 }
 
-BSTR to_windows_path(BSTR src){
+BSTR to_windows_path(BSTR src) {
     BSTR result = 0;
     char* asrc = bstr_to_char(src);
-    if(asrc){
+    if (asrc) {
         char tmp [MAX_PATH+32];
         tmp[0]='\0';
         cygwin::cygwin_conv_to_win32_path(asrc, tmp);
@@ -369,36 +369,36 @@ public:
         : m_module(0),
           m_DwmIsCompositionEnabled(0),
           m_DwmEnableBlurBehindWindow(0),
-          m_DwmExtendFrameIntoClientArea(0){
+          m_DwmExtendFrameIntoClientArea(0) {
         m_module = LoadLibrary(L"dwmapi.dll");
-        if(m_module){
+        if (m_module) {
             m_DwmIsCompositionEnabled = (tDwmIsCompositionEnabled) GetProcAddress(m_module, "DwmIsCompositionEnabled");
             m_DwmEnableBlurBehindWindow = (tDwmEnableBlurBehindWindow) GetProcAddress(m_module, "DwmEnableBlurBehindWindow");
             m_DwmExtendFrameIntoClientArea = (tDwmExtendFrameIntoClientArea) GetProcAddress(m_module, "DwmExtendFrameIntoClientArea");
-            if(!m_DwmIsCompositionEnabled || !m_DwmEnableBlurBehindWindow || !m_DwmExtendFrameIntoClientArea){
+            if (!m_DwmIsCompositionEnabled || !m_DwmEnableBlurBehindWindow || !m_DwmExtendFrameIntoClientArea) {
                 FreeLibrary(m_module);
                 m_module=0;
             }
         }
     }
-    ~dwmapi(){
-        if(m_module){
+    ~dwmapi() {
+        if (m_module) {
             FreeLibrary(m_module);
         }
     }
-    BOOL  enabled(){
-        if(m_module){
+    BOOL  enabled() {
+        if (m_module) {
             BOOL b = FALSE;
             m_DwmIsCompositionEnabled(&b);
-            if(b) return TRUE;
+            if (b) return TRUE;
         }
         return FALSE;
     }
-    WinTransp  set(HWND hwnd, WinTransp mode){
-        if(hwnd && enabled()){
+    WinTransp  set(HWND hwnd, WinTransp mode) {
+        if (hwnd && enabled()) {
             MARGINS margin = {0,0,0,0};
             DWM_BLURBEHIND bb = {DWM_BB_ENABLE | DWM_BB_TRANSITIONONMAXIMIZED, FALSE, 0, FALSE};
-            switch(mode){
+            switch(mode) {
             case WinTransp_GrassNoEdge:
                 m_DwmEnableBlurBehindWindow(hwnd, &bb);
                 margin.cxLeftWidth = -1;
@@ -433,11 +433,11 @@ public:
 static dwmapi  g_dwmapi;
 
 
-BOOL is_desktop_composition(){
+BOOL is_desktop_composition() {
     return g_dwmapi.enabled();
 }
 
-WinTransp  set_window_transp(HWND hwnd, WinTransp n){
+WinTransp  set_window_transp(HWND hwnd, WinTransp n) {
     return g_dwmapi.set(hwnd, n);
 }
 

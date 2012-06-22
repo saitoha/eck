@@ -16,8 +16,8 @@ extern void    trace(const char*, ...);
 //----------------------------------------------------------------------------
 //util.cpp
 
-namespace Ck{
-namespace Util{
+namespace Ck {
+namespace Util {
 
 BOOL show_window(HWND hwnd, int cmd);
 
@@ -50,22 +50,22 @@ WinTransp  set_window_transp(HWND hwnd, WinTransp n);
 
 #define BEGIN_COM_MAP \
     private: ULONG m_ref; \
-    public: STDMETHOD(QueryInterface)(REFIID riid, void** pp){ \
-    if(!pp) return E_POINTER; \
+    public: STDMETHOD(QueryInterface)(REFIID riid, void** pp) { \
+    if (!pp) return E_POINTER; \
 
 #define COM_INTERFACE_ENTRY(type) \
-    else if(riid==__uuidof(type)) *pp = (type*)(this);
+    else if (riid==__uuidof(type)) *pp = (type*)(this);
 
 #define COM_INTERFACE_ENTRY2(type,type2) \
-    else if(riid==__uuidof(type)) *pp = (type*)(type2*)(this);
+    else if (riid==__uuidof(type)) *pp = (type*)(type2*)(this);
 
 #define END_COM_MAP \
-    else { *pp=NULL; return E_NOINTERFACE;} \
+    else { *pp=NULL; return E_NOINTERFACE; } \
     AddRef(); \
     return S_OK; \
     } \
-    STDMETHOD_(ULONG, AddRef)(){return ++m_ref;} \
-    STDMETHOD_(ULONG, Release)(){ULONG n=--m_ref;if(!n)delete this;return n;} \
+    STDMETHOD_(ULONG, AddRef)() {return ++m_ref; } \
+    STDMETHOD_(ULONG, Release)() {ULONG n=--m_ref;if (!n)delete this;return n; } \
     private:
 
 //---
@@ -73,32 +73,32 @@ WinTransp  set_window_transp(HWND hwnd, WinTransp n);
 template<class T> class IDispatchImpl_: public T{
 protected:
     static ITypeInfoPtr g_typeinfo;
-    virtual ~IDispatchImpl_<T>(){}
+    virtual ~IDispatchImpl_<T>() {}
 public:
-    IDispatchImpl_<T>(){
-        if(!g_typeinfo){
+    IDispatchImpl_<T>() {
+        if (!g_typeinfo) {
             g_typelib->GetTypeInfoOfGuid(__uuidof(T),&g_typeinfo);
         }
     }
-    STDMETHOD(GetTypeInfoCount)(unsigned int* n){
-        if(!n) return E_POINTER;
+    STDMETHOD(GetTypeInfoCount)(unsigned int* n) {
+        if (!n) return E_POINTER;
         *n=1;
         return S_OK;
     }
-    STDMETHOD(GetTypeInfo)(unsigned int i, LCID lcid, ITypeInfo** pp){
-        if(!pp) return E_POINTER;
-        if(i) return DISP_E_BADINDEX;
-        if(!g_typeinfo) return E_FAIL;
+    STDMETHOD(GetTypeInfo)(unsigned int i, LCID lcid, ITypeInfo** pp) {
+        if (!pp) return E_POINTER;
+        if (i) return DISP_E_BADINDEX;
+        if (!g_typeinfo) return E_FAIL;
         (*pp) = g_typeinfo;
         (*pp)->AddRef();
         return S_OK;
     }
-    STDMETHOD(GetIDsOfNames)(REFIID riid, OLECHAR** names, unsigned int cnames, LCID lcid, DISPID* dispids){
-        if(!g_typeinfo) return E_FAIL;
+    STDMETHOD(GetIDsOfNames)(REFIID riid, OLECHAR** names, unsigned int cnames, LCID lcid, DISPID* dispids) {
+        if (!g_typeinfo) return E_FAIL;
         return g_typeinfo->GetIDsOfNames(names, cnames, dispids);
     }
-    STDMETHOD(Invoke)(DISPID dispid, REFIID riid, LCID lcid, WORD flag, DISPPARAMS* params, VARIANT* result, EXCEPINFO* excep, unsigned int* err){
-        if(!g_typeinfo) return E_FAIL;
+    STDMETHOD(Invoke)(DISPID dispid, REFIID riid, LCID lcid, WORD flag, DISPPARAMS* params, VARIANT* result, EXCEPINFO* excep, unsigned int* err) {
+        if (!g_typeinfo) return E_FAIL;
         return g_typeinfo->Invoke(this, dispid, flag, params, result, excep, err);
     }
 };
@@ -112,8 +112,8 @@ template<class T> class IUnknownImpl2: public T{
     COM_INTERFACE_ENTRY(IUnknown)
     END_COM_MAP
 protected:
-    virtual ~IUnknownImpl2<T>(){}
-    IUnknownImpl2<T>():m_ref(0){}
+    virtual ~IUnknownImpl2<T>() {}
+    IUnknownImpl2<T>():m_ref(0) {}
 };
 
 //---
@@ -127,8 +127,8 @@ template<class T> class IDispatchImpl3: public IDispatchImpl_<T>{
     COM_INTERFACE_ENTRY(IUnknown)
     END_COM_MAP
 protected:
-    virtual ~IDispatchImpl3<T>(){}
-    IDispatchImpl3<T>():m_ref(0){}
+    virtual ~IDispatchImpl3<T>() {}
+    IDispatchImpl3<T>():m_ref(0) {}
 };
 
 //EOF
