@@ -1,5 +1,6 @@
 
-CC = cl.exe
+CL = cl.exe
+GCC = gcc
 LD = link.exe
 VSDIR=C:\Program Files\Microsoft Visual Studio 10.0\VC
 MSSDK=C:\Program Files\Microsoft SDKs\Windows\v7.0A
@@ -8,7 +9,7 @@ CP = cp -f
 #LD = xilink.exe
 
 #RM = rm -f
-RM = del
+RM = rm -f
 
 CFLAGS  = /nologo \
 		  /MT \
@@ -38,6 +39,7 @@ APP_CFLAGS =
 #APP_CFLAGS = /Qprof-use /Qprof-dir D:\\cygwin\\tmp\\icl-pgo
 
 
+PATH := /cygdrive/c/Program Files/Microsoft Visual Studio 10.0/VC/bin:/cygdrive/c/Program Files/Microsoft SDKs/Windows/v7.0A/bin:$(PATH)
 
 TARGET = ck.exe ck.app.dll ck.con.exe
 
@@ -54,19 +56,18 @@ CLEANFILES = \
 	ck.con.ilk ck.con.pdb ck.con.exp ck.con.lib ck.con.exe.stackdump \
 	ck.app.ilk ck.app.pdb ck.app.exp ck.app.lib \
 	cygwin1_con.exp cygwin1_con.lib \
-	cygwin1_app.exp cygwin1_app.lib
+	cygwin1_app.exp
 
 .SUFFIXES: .cpp .obj  .def .lib  .idl .tlb
 
 all: $(TARGET)
 
-ck.app.dll: cygwin1_app.lib interface.tlh $(OBJS)
-	$(LD) /dll /base:0x1E000000 $(LDFLAGS) /out:$@ $(OBJS)
-
+ck.app.dll: interface.tlh $(OBJS) cygwin1_app.lib
+	$(LD) /dll /base:0x1E000000 $(LDFLAGS) /out:$@ $(OBJS) cygwin1_app.lib
 #ck.con.exe: cygwin1_con.lib main_con.res main_con.obj
 #	$(LD) $(LDFLAGS) /out:$@ main_con.obj chkstk.obj main_con.res
 ck.con.exe:
-	gcc-4.exe main_con_gcc.c -o $@
+	$(GCC) main_con_gcc.c -o $@
 
 ck.exe: main_launch.res main_launch.obj
 	$(LD) $(LDFLAGS) /out:$@ main_launch.obj main_launch.res
@@ -80,29 +81,36 @@ app.res: rsrc.rc ck.ico interface.tlb script_sys.js
 
 
 interface.tlh: interface.tlb
-	$(CC) $(CFLAGS) /nologo /c tlbimp.cpp
+	$(CL) $(CFLAGS) /nologo /c tlbimp.cpp
 main_launch.obj: main_launch.cpp
-	$(CC) $(CFLAGS) /c main_launch.cpp
+	$(CL) $(CFLAGS) /c main_launch.cpp
 main_con.obj: main_con.cpp
-	$(CC) $(CFLAGS) /c main_con.cpp
+	$(CL) $(CFLAGS) /c main_con.cpp
 encoding_table.obj: encoding_table.cpp encoding.h
-	$(CC) $(CFLAGS) $(APP_CFLAGS) /c encoding_table.cpp
+	$(CL) $(CFLAGS) $(APP_CFLAGS) /c encoding_table.cpp
 config.obj: config.cpp config.h
-	$(CC) $(CFLAGS) $(APP_CFLAGS) /Ycconfig.h /c config.cpp
+	$(CL) $(CFLAGS) $(APP_CFLAGS) /Ycconfig.h /c config.cpp
 .cpp.obj:
-	$(CC) $(CFLAGS) $(APP_CFLAGS) /Yuconfig.h /c $<
+	$(CL) $(CFLAGS) $(APP_CFLAGS) /Yuconfig.h /c $<
 .def.lib:
 	lib.exe /nologo /machine:X86 /out:$@ /def:$<
 .idl.tlb:
-	midl.exe /nologo /I"$(MSSDK)\Include" $<
+	midl.exe /nologo /client none $<
 
 zip: $(TARGET)
 	zip eck-$$(date +%y%m%d%H%M%S)-bin.zip $(TARGET) README.md COPYING.txt
 
 clean: cle
 	$(RM) $(TARGET)
+
 cle:
 	$(RM) $(OBJS) $(CLEANFILES) *~
+
+run: all
+	./ck.con.exe
+
+debug: all
+	ntsd.exe ./ck.con.exe
 
 
 encoding.obj: encoding.cpp config.h interface.tlh encoding.h
@@ -111,3 +119,4 @@ pty.obj     : pty.cpp      config.h interface.tlh util.h encoding.h screen.h
 utilobj     : util.cpp     config.h interface.tlh util.h
 window.obj  : window.cpp   config.h interface.tlh util.h
 app.obj     : app.cpp      config.h interface.tlh util.h
+
