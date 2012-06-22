@@ -724,7 +724,6 @@ var Commands ={
 	pty = window.Pty;
 	if (!pty)
 		return false;
-	alert((pty.PrivMode & Priv.BracketedPasteMode).toString(16) + "\n")
 	if (pty.PrivMode & Priv.BracketedPasteMode) {
 		message = "\x1b[200~" + app.Clipboard + "\x1b[201~";
 	} else {
