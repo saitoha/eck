@@ -14,10 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *--------------------------------------------------------------------------*/
-#define PACKAGE_NAME L"eck"
 #define _WIN32_WINNT 0x600
 #define WIN32_LEAN_AND_MEAN 1
 #define UNICODE  1
+#include "config.h"
 #include <Windows.h>
 #include <ShellApi.h>
 #pragma comment(linker, "/nodefaultlib:libcmt.lib")
@@ -56,7 +56,7 @@ static bool  send_command(HWND hwnd){
 }
 
 static HWND  find_ck_window(HWND current){
-    return FindWindowEx(HWND_MESSAGE, current, L"ckApplicationClass", 0);
+    return FindWindowEx(HWND_MESSAGE, current, WINCLASS_NAME, 0);
 }
 
 static HWND  find_parent_ck_window(){

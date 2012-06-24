@@ -44,6 +44,7 @@ Screen_::Screen_()
       m_pageH(0),
       m_curX(0),
       m_curY(0),
+      m_originY(0),
       m_rgn_top(0),
       m_rgn_btm(0),
       m_sel_top(-1),
@@ -183,8 +184,8 @@ void Screen_::scroll_down(int top, int btm, int n) {
         ClearSelection();
 }
 
-void Screen_::add_char(WCHAR w, CharFlag style) {
-    if (m_feed_next) {
+void Screen_::add_char(WCHAR w, CharFlag style, bool wrap) {
+    if (wrap && m_feed_next) {
         Feed();
         m_curX = 0;
     }
@@ -203,7 +204,7 @@ void Screen_::add_char(WCHAR w, CharFlag style) {
             ClearSelection();
     }
 
-    if (++m_curX >= m_pageW) {
+    if (++m_curX > m_pageW) {
         m_curX--;
         m_feed_next = true;
     }
@@ -374,20 +375,23 @@ void Screen_::SetRegion(int top, int btm) {
 }
 
 void Screen_::ScrollPage(int n) {
-    if (n==0) return;
+    if (n == 0) return;
     int top,btm;
     if (m_rgn_btm) {
         top = m_rgn_top;
-        btm = m_rgn_btm+1;
+        btm = m_rgn_btm + 1;
     }
     else {
         top = 0;
         btm = m_pageH;
     }
-    if (n > 0) scroll_up(top,btm, n);
-    else      scroll_down(top,btm, -n);
+    if (n > 0)
+        scroll_up(top,btm, n);
+    else
+        scroll_down(top,btm, -n);
     m_feed_next = false;
 }
+
 void Screen_::InsertLine(int n) {
     int btm;
     if (m_rgn_btm) {
@@ -462,19 +466,21 @@ void Screen_::FeedRev() {
 }
 
 void Screen_::InsertChar(int n) {
-    if (n<1) n=1;
+    if (n < 1)
+        n=1;
     if (n > m_pageW - m_curX)
         n = m_pageW - m_curX;
     Line& p = get_line(m_curY);
-    for (int i=m_pageW-1; i >= m_curX+n; i--)
+    for (int i = m_pageW - 1; i >= m_curX+n; i--)
         p.chars[i] = p.chars[i-n];
-    clear_line(p, m_curX, m_curX+n);
+    clear_line(p, m_curX, m_curX + n);
 
     if (check_selection_x(m_curY, m_curX, m_pageW-1))
         ClearSelection();
 }
 void Screen_::DeleteChar(int n) {
-    if (n<1) n=1;
+    if (n < 1)
+       n = 1;
     if (n > m_pageW - m_curX)
         n = m_pageW - m_curX;
     Line& p = get_line(m_curY);
@@ -486,13 +492,14 @@ void Screen_::DeleteChar(int n) {
         ClearSelection();
 }
 void Screen_::EraseChar(int n) {
-    if (n<1) n=1;
+    if (n < 1)
+       n = 1;
     if (n > m_pageW - m_curX)
         n = m_pageW - m_curX;
     Line& p = get_line(m_curY);
     clear_line(p, m_curX, m_curX+n);
 
-    if (check_selection_x(m_curY, m_curX, m_curX+n-1))
+    if (check_selection_x(m_curY, m_curX, m_curX + n - 1))
         ClearSelection();
 }
 
@@ -567,10 +574,22 @@ void Screen_::SetSelection(int x1, int y1, int x2, int y2, int mode) {
     }
 
     int maxY = GetNumLines()-1;
-    if (y1<0)y1=0; else if (y1>maxY) y1=maxY;
-    if (y2<0)y2=0; else if (y2>maxY) y2=maxY;
-    if (x1<0)x1=0;
-    if (x2<0)x2=0;
+    if (y1<0)
+        y1=0;
+    else if (y1>maxY)
+       y1=maxY;
+
+    if (y2<0)
+        y2=0;
+    else if (y2>maxY)
+       y2=maxY;
+
+    if (x1<0)
+        x1=0;
+
+    if (x2<0)
+        x2=0;
+
     if (y1 < y2 || (y1==y2 && x1<x2)) {
         m_sel_top  = y1;
         m_sel_topX = x1;
@@ -590,8 +609,10 @@ void Screen_::SetSelection(int x1, int y1, int x2, int y2, int mode) {
         m_sel_topX=0;
         m_sel_btmX=m_pageW;
     }
-    else if (mode==1) {//expand word
-        static const wchar_t BREAK_CHARS[] = L"\"&'()*,./:;<=>@[\\]^`{}~\x3000\x3001\x3002\x300C\x300D\x3010\x3011";
+    else if (mode==1) { //expand word
+        static const wchar_t BREAK_CHARS[] 
+            = L"\"&'()*,./:;<=>@[\\]^`{}~\x3000\x3001\x3002\x300C\x300D\x3010\x3011";
+
         Line& p1 = get_line_glb(m_sel_top);
         if (m_sel_topX < p1.count) {
             while (m_sel_topX > 0) {

@@ -240,7 +240,8 @@ var Align ={
 
 function CONFIG() {
   this.tty={
-    execute_command  :"/bin/bash -i",
+    execute_command  :"bash -i",
+    workdir: "~/",
     title    :"eck",
     savelines  :1000,
     input_encoding  :Encoding.SJIS,

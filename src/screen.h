@@ -21,6 +21,8 @@ private:
     int    m_curX;
     int    m_curY;
 
+    int    m_originY;
+
     int    m_rgn_top;
     int    m_rgn_btm;
 
@@ -56,7 +58,7 @@ private:
     void _resize(int newsize);
     void scroll_up(int top, int btm, int n);
     void scroll_down(int top, int btm, int n);
-    void add_char(WCHAR w, CharFlag style);
+    void add_char(WCHAR w, CharFlag style, bool wrap);
 
     void _finalize();
 public:
@@ -113,6 +115,19 @@ public:
             m_feed_next = false;
         }
     }
+    void SetRelativeCurY(int n) {
+        if (n != m_curY) {
+            m_curY = (n<0)? 0: (n<m_pageH-1)? n: m_pageH-1 
+                   + m_originY;
+            m_feed_next = false;
+        }
+    }
+    void SetOrigin() {
+        m_originY = m_curY;
+    }
+    void ResetOrigin() {
+        m_originY = 0; 
+    }
     void MoveCurX(int n) {
         m_curX+=n;
         if (m_curX<0) m_curX=0;
@@ -150,12 +165,12 @@ public:
         }
     }
 
-    void AddCharMB(WCHAR w) {
-        add_char(w, (CharFlag)(m_style | CharFlag_MbLead));
-        add_char(w, (CharFlag)(m_style | CharFlag_MbTrail));
+    void AddCharMB(WCHAR w, bool wrap) {
+        add_char(w, (CharFlag)(m_style | CharFlag_MbLead), wrap);
+        add_char(w, (CharFlag)(m_style | CharFlag_MbTrail), wrap);
     }
-    void AddChar(WCHAR w) {
-        add_char(w, m_style);
+    void AddChar(WCHAR w, bool wrap) {
+        add_char(w, m_style, wrap);
     }
     void SetAddMode(bool ins) { m_insert_mode=ins; }
 

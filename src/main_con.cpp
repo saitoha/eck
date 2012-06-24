@@ -141,7 +141,7 @@ extern "C" __declspec(dllexport) HRESULT execpty(LPCWSTR cmdline, int* out_pid, 
 
 HRESULT cpp_startup(){
     HRESULT hr;
-    HMODULE app = LoadLibrary(L"ck.app.dll");
+    HMODULE app = LoadLibrary(L"eck.app.dll");
     if(!app){
         hr = HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND);
     }
@@ -183,7 +183,7 @@ HRESULT clr_startup(){
                 }
                 else{
                     DWORD dw;
-                    hr = host->ExecuteInDefaultAppDomain(L"ck.clr.dll", L"Ck.App", L"Startup", L"", &dw);
+                    hr = host->ExecuteInDefaultAppDomain(L"eck.clr.dll", L"Eck.App", L"Startup", L"", &dw);
                     if(FAILED(hr)){
                     }
                     else{

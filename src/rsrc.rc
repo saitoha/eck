@@ -6,16 +6,16 @@
 
 #if TARGET==0
 
- #define TARGET_NAME  "ck.exe"
+ #define TARGET_NAME  "eck.exe"
  1   ICON ck.ico
 
 #elif TARGET==1
 
- #define TARGET_NAME  "ck.con.exe"
+ #define TARGET_NAME  "eck.con.exe"
 
 #elif TARGET==2
 
- #define TARGET_NAME  "ck.app.dll"
+ #define TARGET_NAME  "eck.app.dll"
  1   ICON ck.ico
  1   TYPELIB "interface.tlb"
  201 SCRIPT  "script_sys.js"
@@ -44,7 +44,7 @@ BEGIN
    VALUE "InternalName",     TARGET_NAME
    VALUE "LegalCopyright",   "(C) kish@wb3.so-net.ne.jp"
    VALUE "OriginalFilename", TARGET_NAME
-   VALUE "ProductName",      "cygwin ck"
+   VALUE "ProductName",      "cygwin eck"
    VALUE "ProductVersion",   VERSION_STRING
   END
  END

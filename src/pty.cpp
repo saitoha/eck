@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *--------------------------------------------------------------------------*/
+#define PACKAGE_NAME L"eck"
 #include "config.h"
 #include <process.h>
 //#import  "interface.tlb" raw_interfaces_only
@@ -304,6 +305,7 @@ protected:
         m_screen.Fore().Reset(full);
         m_screen.Back().Reset(full);
         m_screen.Set(false);
+        m_screen.Current().ResetOrigin();
     }
     void put_char(char ch) {
         m_wr_buf.Push((BYTE*)&ch, 1);
@@ -677,12 +679,14 @@ Pty_::Pty_(IPtyNotify_* cb, BSTR cmdline)
     //
     trace("Pty_::ctor\n");
     try{
-        m_title = SysAllocString(L"ck");
-        if (!m_title) throw std::bad_alloc();
+        m_title = SysAllocString(PACKAGE_NAME);
+        if (!m_title)
+           throw std::bad_alloc();
 
         int pid,fd;
         HRESULT hr = cyg_execpty(cmdline, &pid, &fd);
-        if (FAILED(hr)) throw hr;
+        if (FAILED(hr))
+           throw hr;
 
         trace(" forkpty pid=%d fd=%d\n", pid,fd);
         m_pid = pid;
@@ -1074,6 +1078,10 @@ void Pty_::_process_sequence_term_mode(char priv, int n, int arg[], UpdateStore&
             break;
         case 6://DECOM relative/absolute origin mode
             _set_priv(priv, Priv_RelOrg);
+            if (priv == 'h')
+                m_screen.Current().SetOrigin();
+            else if (priv == 'l')
+                m_screen.Current().ResetOrigin();
             break;
         case 7://DECAWM autowrap
             _set_priv(priv, Priv_AutoWrap);
@@ -1242,7 +1250,7 @@ bool Pty_::_process_sequence_csi(WCHAR* input, int& idx, int max, UpdateStore& u
     case 'd'://VPA line position absolute
         if (arg0 == 0) 
             arg0 = 1;
-        m_screen.Current().SetCurY(arg0-1);
+        m_screen.Current().SetRelativeCurY(arg0-1);
         break;
     case 'H'://CUP cursor position
     case 'f'://HVP character and line position
@@ -1250,8 +1258,8 @@ bool Pty_::_process_sequence_csi(WCHAR* input, int& idx, int max, UpdateStore& u
             arg0 = 1;
         if (arg1 == 0) 
             arg1 = 1;
-        m_screen.Current().SetCurY(arg0-1);
-        m_screen.Current().SetCurX(arg1-1);
+        m_screen.Current().SetRelativeCurY(arg0 - 1);
+        m_screen.Current().SetCurX(arg1 - 1);
         break;
     case 'Z'://CBT cursor backward tabulation
         if (arg0 == 0) 
@@ -1308,17 +1316,19 @@ bool Pty_::_process_sequence_csi(WCHAR* input, int& idx, int max, UpdateStore& u
     case 'u'://75
         m_screen.Current().RestoreCur();
         break;
-    case 'r'://72
+    case 'r'://72 DECSTBM
         if (arg0 == 0) 
             arg0 = 1;
         if (arg1 == 0) 
             arg1 = 1;
-        if (n < 2) 
-            arg1 = m_screen.Current().GetPageHeight();
-        if (arg0>=arg1) arg0=arg1=1;
-        m_screen.Current().SetCurY(0);
+        //if (n < 2) 
+        //    arg1 = m_screen.Current().GetPageHeight();
+        if (arg0>=arg1)
+            arg0 = arg1 = 1;
+        m_screen.Current().SetCurY(arg0 - 1);
         m_screen.Current().SetCurX(0);
-        m_screen.Current().SetRegion(arg0-1, arg1-1);
+        m_screen.Current().SetOrigin();
+        m_screen.Current().SetRegion(arg0 - 1, arg1 - 1);
         break;
     case 'c'://DA device attribute
         put_string(VT100_ANSWER);
@@ -1619,9 +1629,9 @@ bool Pty_::_process_sequence(WCHAR* input, int& idx, int max, UpdateStore& upp) 
         bool (*isdbl)(WCHAR) 
             = _get_priv(Priv_CjkWidth) ? Enc::is_dblchar_cjk : Enc::is_dblchar;
         if (isdbl(ch))
-            m_screen.Current().AddCharMB(ch);
+            m_screen.Current().AddCharMB(ch, _get_priv(Priv_AutoWrap) != 0);
         else
-            m_screen.Current().AddChar(ch);
+            m_screen.Current().AddChar(ch, _get_priv(Priv_AutoWrap) != 0);
         break;
     }
     return true;
@@ -1795,14 +1805,16 @@ public:
 
 
 extern "C" __declspec(dllexport) HRESULT CreatePty(Ck::IPtyNotify* cb, BSTR cmdline, Ck::IPty** pp) {
-    if (!pp) return E_POINTER;
-    if (!cb) return E_INVALIDARG;
+    if (!pp)
+       return E_POINTER;
+    if (!cb)
+       return E_INVALIDARG;
 
     HRESULT hr;
     Ck::Pty* p = 0;
 
     try{
-        p = new Ck::Pty(cb,cmdline);
+        p = new Ck::Pty(cb, cmdline);
         p->AddRef();
         hr = S_OK;
     }

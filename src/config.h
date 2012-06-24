@@ -11,7 +11,9 @@
 #include <crtdbg.h>
 #endif
 
-#include <Windows.h>
+#include <windows.h>
+
+#ifdef _MSC_VER
 #include <WindowsX.h>
 #include <ObjBase.h>
 #include <StrSafe.h>
@@ -28,5 +30,9 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <exception>
+#endif
+
+#define WINCLASS_NAME L"eckApplicationClass"
+#define PACKAGE_NAME L"eck"
 
 //EOF

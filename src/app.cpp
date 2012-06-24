@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *--------------------------------------------------------------------------*/
+
 #include "config.h"
 //#import  "interface.tlb" raw_interfaces_only
 #include "interface.tlh"
@@ -24,7 +25,7 @@
 ITypeLibPtr  g_typelib;
 HMODULE      g_this_module = 0;
 
-//ck.con.exe
+//eck.con.exe
 HRESULT (* cyg_execpty)(LPCWSTR, int*, int*) = 0;
 //cygwin1.dll
 char*   (* cyg_getenv)(const char*) = 0;
@@ -723,7 +724,7 @@ HRESULT App::initialize() {
     wc.cbSize = sizeof(wc);
     wc.lpfnWndProc = _wndproc;
     wc.hInstance = g_this_module;
-    wc.lpszClassName = L"ckApplicationClass";
+    wc.lpszClassName = WINCLASS_NAME;
     if (!RegisterClassEx(&wc))
         return E_FAIL;
 
@@ -869,7 +870,7 @@ extern "C" BOOL WINAPI DllMain(HMODULE module, DWORD reason, LPVOID lp) {
     if (reason == DLL_PROCESS_ATTACH) {
         g_this_module = module;
         {
-            module = GetModuleHandle(0);//ck.con.exe
+            module = GetModuleHandle(0);//eck.con.exe
             if (!module) return FALSE;
             cyg_execpty = (HRESULT(*)(LPCWSTR,int*,int*)) GetProcAddress(module, "execpty");
 

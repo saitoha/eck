@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *--------------------------------------------------------------------------*/
-#define PACKAGE_NAME "eck"
 #define _WIN32_WINNT 0x600
 #define WIN32_LEAN_AND_MEAN 1
 #define UNICODE  1
@@ -25,6 +24,7 @@
 #include <pwd.h>
 #include <pty.h>
 #include <signal.h>
+#include "config.h"
 
 typedef LPWSTR* (WINAPI * tCommandLineToArgvW)(LPCWSTR,int*);
 typedef int     (WINAPI * tMessageBoxW)(HWND,LPCWSTR,LPCWSTR,DWORD);
