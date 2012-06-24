@@ -1,4 +1,21 @@
-﻿2012-06-12  Hayaki Saito <user@zuse.jp>
+﻿
+2012-06-25  Hayaki Saito <user@zuse.jp>
+        ・implement AWM (auto wrap mode), DECOM (origin mode),
+		  and fix auto wrapping behavior.
+
+2012-06-24  Hayaki Saito <user@zuse.jp>
+        ・Change program name ck -> eck.
+
+2012-06-23  Hayaki Saito <user@zuse.jp>
+        ・Add TNAMB(DECAMB), for East Asian ambiguous width characters.
+
+2012-06-18  Hayaki Saito <user@zuse.jp>
+        ・Add Bracketed Paste Mode (DECSET/DECRST 2004).
+
+2012-06-13  Hayaki Saito <user@zuse.jp>
+        ・Add mouse reporting feature (normal/urxvt/SGR).
+
+2012-06-12  Hayaki Saito <user@zuse.jp>
         eck Version 0.0.1
         ・fork
 

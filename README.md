@@ -20,6 +20,9 @@ https://github.com/saitoha/eck
 
 * 拡張マウスレポーティング（urxvt/SGR）への対応
 * Bracketed Paste Modeへの対応
+* TNAMB (ambiguous width switching)への対応
+* DECOM (origin mode)への対応
+* AWM (auto wrap mode)への対応
 
 #########################################################################
 # コンパイルとインストール
