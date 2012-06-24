@@ -22,7 +22,7 @@ https://github.com/saitoha/eck
 * Bracketed Paste Modeへの対応
 
 #########################################################################
-# コンパイル
+# コンパイルとインストール
 
   Visual C++ 2010 Express Edition と cygwin gcc-4が必要です。
 
@@ -32,7 +32,7 @@ https://github.com/saitoha/eck
 
   make install
 
-  /eck
+  /binにeck.exeがインストールされます。
 
 #########################################################################
 # その他
