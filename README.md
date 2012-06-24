@@ -29,12 +29,16 @@ https://github.com/saitoha/eck
   コンパイルはcygwinプロンプト上で行います。
   
   make
+
   make install
+
   /eck
 
 #########################################################################
 # その他
 
   文字コード変換テーブル(encoding_table.cpp)は .NET frameworkのデータからC#で生成しています。
+
     csc.exe gen_enc.cs [enter]
+
     gen_enc.exe [enter]
