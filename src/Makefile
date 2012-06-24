@@ -1,15 +1,18 @@
 
-CL = cl.exe
-GCC = gcc
-LD = link.exe
+CL=cl.exe
+GCC=gcc
+LD=link.exe
 VSDIR=C:\Program Files\Microsoft Visual Studio 10.0\VC
 MSSDK=C:\Program Files\Microsoft SDKs\Windows\v7.0A
-CP = cp -f
+CP=cp -f
+PROGRAM=eck
+ZIP=zip
+
 #CC = icl.exe /Qvc9
 #LD = xilink.exe
 
 #RM = rm -f
-RM = rm -f
+RM=rm -f
 
 CFLAGS  = /nologo \
 		  /MT \
@@ -39,9 +42,12 @@ APP_CFLAGS =
 #APP_CFLAGS = /Qprof-use /Qprof-dir D:\\cygwin\\tmp\\icl-pgo
 
 
-PATH := /cygdrive/c/Program Files/Microsoft Visual Studio 10.0/VC/bin:/cygdrive/c/Program Files/Microsoft SDKs/Windows/v7.0A/bin:$(PATH)
+VCBIN :=/cygdrive/c/Program Files/Microsoft Visual Studio 10.0/VC/bin
+SDKBIN :=/cygdrive/c/Program Files/Microsoft SDKs/Windows/v7.0A/bin
+IDEPATH :=/cygdrive/c/Program Files/Microsoft Visual Studio 10.0/Common7/IDE
+PATH :=$(VCBIN):$(SDKBIN):$(IDEPATH):$(PATH)
 
-TARGET = ck.exe ck.app.dll ck.con.exe
+TARGET = $(PROGRAM).exe $(PROGRAM).app.dll $(PROGRAM).con.exe
 
 OBJS   = config.obj app.res app.obj window.obj util.obj \
 	pty.obj screen.obj encoding.obj encoding_table.obj
@@ -51,25 +57,26 @@ CLEANFILES = \
 	tlbimp.obj interface.tlb interface.tlh interface.h interface_i.c interface_p.c dlldata.c \
 	main_launch.obj main_launch.res \
 	main_con.obj main_con.res \
-	ck.con.exe main_con_gcc.res.o \
-	vc100.idb vc100.pdb ck.ilk ck.pdb \
-	ck.con.ilk ck.con.pdb ck.con.exp ck.con.lib ck.con.exe.stackdump \
-	ck.app.ilk ck.app.pdb ck.app.exp ck.app.lib \
+	$(PROGRAM).con.exe main_con_gcc.res.o \
+	vc100.idb vc100.pdb $(PROGRAM).ilk $(PROGRAM).pdb \
+	$(PROGRAM).con.ilk $(PROGRAM).con.pdb $(PROGRAM).con.exp $(PROGRAM).con.lib $(PROGRAM).con.exe.stackdump \
+	$(PROGRAM).app.ilk $(PROGRAM).app.pdb $(PROGRAM).app.exp $(PROGRAM).app.lib \
 	cygwin1_con.exp cygwin1_con.lib \
 	cygwin1_app.exp
 
 .SUFFIXES: .cpp .obj  .def .lib  .idl .tlb
 
-all: $(TARGET)
+all:
+	export LANG=C && $(MAKE) $(TARGET) 2>&1 | iconv -f sjis -t UTF-8
 
-ck.app.dll: interface.tlh $(OBJS) cygwin1_app.lib
+$(PROGRAM).app.dll: interface.tlh $(OBJS) cygwin1_app.lib
 	$(LD) /dll /base:0x1E000000 $(LDFLAGS) /out:$@ $(OBJS) cygwin1_app.lib
-#ck.con.exe: cygwin1_con.lib main_con.res main_con.obj
+#$(PROGRAM).con.exe: cygwin1_con.lib main_con.res main_con.obj
 #	$(LD) $(LDFLAGS) /out:$@ main_con.obj chkstk.obj main_con.res
-ck.con.exe:
+$(PROGRAM).con.exe:
 	$(GCC) main_con_gcc.c -o $@
 
-ck.exe: main_launch.res main_launch.obj
+$(PROGRAM).exe: main_launch.res main_launch.obj
 	$(LD) $(LDFLAGS) /out:$@ main_launch.obj main_launch.res
 
 main_launch.res: rsrc.rc ck.ico
@@ -94,24 +101,30 @@ config.obj: config.cpp config.h
 	$(CL) $(CFLAGS) $(APP_CFLAGS) /Yuconfig.h /c $<
 .def.lib:
 	lib.exe /nologo /machine:X86 /out:$@ /def:$<
-.idl.tlb:
-	midl.exe /nologo /client none $<
+
+interface.tlb: interface.idl
+	midl.exe /nologo /client none /I"$(MSSDK)\Include" $<
 
 zip: $(TARGET)
-	cp ../README.md ../COPYING.txt .
-	zip eck-$$(date +%y%m%d%H%M%S)-bin.zip $(TARGET) README.md COPYING.txt
+	$(CP) ../README.md ../COPYING.txt .
+	$(ZIP) $(PROGRAM)-$$(date +%y%m%d%H%M%S)-bin.zip $(TARGET) README.md COPYING.txt
+	$(RM) README.md COPYING.txt
 
-clean: cle
+clean:
+	$(RM) $(OBJS) $(CLEANFILES) *~
 	$(RM) $(TARGET)
 
-cle:
-	$(RM) $(OBJS) $(CLEANFILES) *~
+install: $(TARGET)
+	$(CP) $^ /usr/bin
+
+uninstall: $(TARGET)
+	$(CP) $^ /usr/bin
 
 run: all
-	./ck.con.exe
+	./$(PROGRAM).con.exe
 
 debug: all
-	ntsd.exe ./ck.con.exe
+	ntsd.exe ./$(PROGRAM).con.exe
 
 
 encoding.obj: encoding.cpp config.h interface.tlh encoding.h

@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *--------------------------------------------------------------------------*/
+#define PACKAGE_NAME "eck"
 #define _WIN32_WINNT 0x600
 #define WIN32_LEAN_AND_MEAN 1
 #define UNICODE  1
@@ -146,7 +147,7 @@ int  main(int argc, char* argv[]){
 			if(FAILED(hr)){
 			}
 			else{
-				app = LoadLibrary(L"ck.app.dll");
+				app = LoadLibrary(PACKAGE_NAME L".app.dll");
 				if(!app){
 					hr = HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND);
 				}

@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *--------------------------------------------------------------------------*/
+#define PACKAGE_NAME L"eck"
 #define _WIN32_WINNT 0x600
 #define WIN32_LEAN_AND_MEAN 1
 #define UNICODE  1
@@ -122,7 +123,7 @@ static HRESULT startup() {
         return E_FAIL;
 
     for(; n>0 && image[n-1] != '\\'; n--);
-    lstrcpy(image + n, L"ck.con.exe");
+    lstrcpy(image + n, PACKAGE_NAME L".con.exe");
 
     STARTUPINFO si;
     PROCESS_INFORMATION pi;

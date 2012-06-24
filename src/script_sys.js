@@ -1,4 +1,6 @@
-﻿var Keys ={
+﻿
+var Keys ={
+
   ShiftL:0x01000000,
   ShiftR:0x02000000,
   Shift :0x01000000 | 0x02000000,
@@ -238,8 +240,8 @@ var Align ={
 
 function CONFIG() {
   this.tty={
-    execute_command  :"/bin/bash --login -i",
-    title    :"ck",
+    execute_command  :"/bin/bash -i",
+    title    :"eck",
     savelines  :1000,
     input_encoding  :Encoding.SJIS,
     display_encoding:Encoding.SJIS | Encoding.EUCJP | Encoding.UTF8,
